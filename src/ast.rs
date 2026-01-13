@@ -29,4 +29,6 @@ pub enum Op {
     LessThan,
     GreaterThanOrEq,
     LessThanOrEq,
+    Or,
+    And,
 }

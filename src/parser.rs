@@ -116,8 +116,46 @@ impl Parser {
         Ok(columns)
     }
 
-    // Typo fix: prase -> parse
     fn parse_expression(&mut self) -> Result<Expr, String> {
+        self.parse_logic_or()
+    }
+
+    fn parse_logic_or(&mut self) -> Result<Expr, String> {
+        let mut left = self.parse_logic_and()?;
+
+        while self.match_token(Token::Or) {
+            let op = Op::Or;
+
+            let right = self.parse_logic_and()?;
+
+            left = Expr::BinaryOp {
+                left: Box::new(left),
+                op,
+                right: Box::new(right),
+            };
+        }
+        Ok(left)
+    }
+
+    fn parse_logic_and(&mut self) -> Result<Expr, String> {
+        let mut left = self.parse_comparsion()?;
+
+        while self.match_token(Token::And) {
+            let op = Op::And;
+
+            let right = self.parse_comparsion()?;
+
+            left = Expr::BinaryOp {
+                left: Box::new(left),
+                op,
+                right: Box::new(right),
+            };
+        }
+        Ok(left)
+    }
+
+    // Typo fix: prase -> parse
+    fn parse_comparsion(&mut self) -> Result<Expr, String> {
         let left = self.parse_leaf()?;
 
         let op = match self.current() {
@@ -131,7 +169,7 @@ impl Parser {
         };
 
         self.advance(); // Makan operatornya
-        let right = self.parse_leaf()?;
+        let right = self.parse_comparsion()?;
 
         Ok(Expr::BinaryOp {
             left: Box::new(left),

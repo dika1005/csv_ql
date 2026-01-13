@@ -82,28 +82,65 @@ pub fn execute(query: Statement) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-// --- LOGIC EVALUATOR (The Brain) ---
-// Ini fungsi rekursif buat ngecek "Apakah umur > 20?"
 fn eval(expr: &Expr, row: &csv::StringRecord, col_map: &HashMap<String, usize>) -> bool {
     match expr {
-        // Logika Perbandingan (Binary Operation)
         Expr::BinaryOp { left, op, right } => {
-            // Kita perlu ambil NILAI kiri dan kanan
-            let left_val = get_value(left, row, col_map);
-            let right_val = get_value(right, row, col_map);
-
+            // PERUBAHAN BESAR DISINI!
+            // Dulu kita langsung ambil get_value (angka).
+            // Sekarang kita cek dulu Operatornya apa.
+            
             match op {
-                Op::GreaterThan => left_val > right_val,
-                Op::LessThan => left_val < right_val,
-                Op::Equal => (left_val - right_val).abs() < f64::EPSILON, // Cara bandingin float
-                Op::NotEqual => (left_val - right_val).abs() > f64::EPSILON,
-                Op::GreaterThanOrEq => left_val >= right_val,
-                Op::LessThanOrEq => left_val <= right_val,
+                // KELOMPOK 1: LOGIKA (AND / OR)
+                // Logic ini menggabungkan dua kebenaran (Bool ketemu Bool)
+                Op::And => {
+                    // HINT:
+                    // 1. Cek apakah kiri BENAR? (panggil eval lagi buat left)
+                    // 2. Cek apakah kanan BENAR? (panggil eval lagi buat right)
+                    // 3. Gabungkan pakai operator && (dan)
+                    
+                    // Isi titik-titik ini:
+                    let left_is_correct = eval(left, row, col_map);
+                    let right_is_correct = eval(right, row, col_map);
+                    return left_is_correct && right_is_correct; 
+                },
+                Op::Or => {
+                    // HINT:
+                    // Sama kayak AND, tapi pakai operator || (atau)
+                    
+                    let left_is_correct = eval(left, row, col_map);
+                    let right_is_correct = eval(right, row, col_map);
+                    return left_is_correct || right_is_correct;
+                },
+
+                // KELOMPOK 2: PERBANDINGAN (Comparison)
+                // Logic ini membandingkan angka (Angka ketemu Angka)
+                // Ini kode lama kamu, saya masukin ke sini.
+                _ => {
+                    let left_val = get_value(left, row, col_map);
+                    let right_val = get_value(right, row, col_map);
+
+                    match op {
+                        Op::GreaterThan => left_val > right_val,
+                        Op::LessThan => left_val < right_val,
+                        Op::Equal => (left_val - right_val).abs() < f64::EPSILON,
+                        Op::NotEqual => (left_val - right_val).abs() > f64::EPSILON,
+                        Op::GreaterThanOrEq => left_val >= right_val,
+                        Op::LessThanOrEq => left_val <= right_val,
+                        
+                        // Karena AND/OR sudah di-handle di atas, 
+                        // di sini kita kasih dummy (seharusnya gak bakal masuk sini)
+                        _ => false, 
+                    }
+                }
             }
         }
-        _ => false, // Harusnya expr utama selalu BinaryOp di implementasi ini
+        _ => false,
     }
 }
+
+// --- LOGIC EVALUATOR (The Brain) ---
+// Ini fungsi rekursif buat ngecek "Apakah umur > 20?"
+
 
 // Helper buat ngambil nilai angka dari CSV atau AST
 fn get_value(expr: &Expr, row: &csv::StringRecord, col_map: &HashMap<String, usize>) -> f64 {
