@@ -13,8 +13,7 @@ fn main() {
     // Cari yang umurnya DI ATAS 20 -DAN- DI BAWAH 30
     // Harusnya yang keluar cuma: Dika (22), Siti (25), Gita (29)
 // Cari yang < 20 ATAU > 30
-let input = "SELECT nama, umur FROM data.csv WHERE umur < 20 OR umur > 30 LIMIT 5";
-
+let input = "SELECT * FROM data.csv";
     println!("---------------------------------------------------");
     println!("INPUT QUERY: \n{}", input);
     println!("---------------------------------------------------");

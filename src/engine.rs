@@ -41,10 +41,15 @@ pub fn execute(query: Statement) -> Result<(), Box<dyn Error>> {
 
                 // 5. Print Header (Cuma sekali)
                 if !printed_header {
-                    println!("Hasil Pencarian:");
-                    // Print nama kolom yang diminta user
-                    println!("{:?}", columns); 
-                    println!("---------------------------");
+                    println!("hasil pencarian: ");
+
+                    if columns.len() == 1 && columns[0] == "*" {
+                        println!("{:?}", headers);
+                    } else {
+                        println!("{:?}", columns);
+                    }
+
+                    println!("---------------------------------------");
                     printed_header = true;
                 }
 
