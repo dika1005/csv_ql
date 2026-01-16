@@ -190,7 +190,12 @@ impl Parser {
                 self.advance();
                 Ok(e)
             }
-            _ => Err("Harap sertakan identifier atau number".to_string()),
+            Some(Token::StringLiteral(s)) => {
+                let e = Expr::StringLiteral(s.clone());
+                self.advance();
+                Ok(e)
+            }
+            _ => Err("Harap sertakan identifier, number, atau string".to_string()),
         }
     }
 }

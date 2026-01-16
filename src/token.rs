@@ -1,32 +1,30 @@
 #[derive(Debug, PartialEq, Clone)]
-#[allow(dead_code)]
 pub enum Token {
-        //keywords
-        Select,
-        From,
-        Where,
-        Limit,
-        Or,
-        And,
-        OrderBy,
-        GroupBy,
+    // Keywords
+    Select,
+    From,
+    Where,
+    Limit,
+    Or,
+    And,
 
-        //operators
-        Equal,
-        NotEqual,
-        GreaterThan,
-        LessThan,
-        GreaterThanOrEq,
-        LessThanOrEq,
-        Star,
+    // Operators
+    Equal,
+    NotEqual,
+    GreaterThan,
+    LessThan,
+    GreaterThanOrEq,
+    LessThanOrEq,
+    Star,
 
-        //literal & identifiers
-        Identifier(String),
-        Number(f64),
+    // Literal & Identifiers
+    Identifier(String),
+    Number(f64),
+    StringLiteral(String),
 
-        //punctuation
-        Comma,
+    // Punctuation
+    Comma,
 
-        ///special
-        EOF,
-    }
+    // Special
+    EOF,
+}

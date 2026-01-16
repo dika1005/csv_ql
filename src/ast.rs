@@ -17,6 +17,7 @@ pub enum Expr {
         right: Box<Expr>,
     },
     Literal(String),
+    StringLiteral(String),
     Number(f64),
     Identifier(String),
 }

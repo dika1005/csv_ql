@@ -24,6 +24,8 @@ impl<'a> Lexer<'a> {
             Some(c) if c.is_ascii_alphabetic() || *c == '_' => Some(self.scan_identifier()),
             // Kalau angka -> Scan nomor
             Some(c) if c.is_ascii_digit() => Some(self.scan_number()),
+            // Kalau tanda kutip -> Scan string literal
+            Some(&'"') | Some(&'\'') => Some(self.scan_string()),
             // Sisanya simbol
             Some(_) => self.scan_symbol(),
         }
@@ -80,30 +82,61 @@ impl<'a> Lexer<'a> {
         Token::Number(value)
     }
 
+    fn scan_string(&mut self) -> Token {
+        let quote = self.input.next().unwrap(); // Makan tanda kutip pembuka
+        let mut text = String::new();
+
+        while let Some(&c) = self.input.peek() {
+            if c == quote {
+                self.input.next(); // Makan tanda kutip penutup
+                break;
+            }
+            text.push(c);
+            self.input.next();
+        }
+
+        Token::StringLiteral(text)
+    }
+
     fn scan_symbol(&mut self) -> Option<Token> {
         let c = self.input.next()?;
 
         match c {
             '*' => Some(Token::Star),
             ',' => Some(Token::Comma),
-            '=' => Some(Token::Equal), // Nanti bisa tambahin logic == kalau mau
+            '=' => Some(Token::Equal),
+            '!' => {
+                if let Some(&'=') = self.input.peek() {
+                    self.input.next();
+                    Some(Token::NotEqual)
+                } else {
+                    None
+                }
+            }
             '>' => {
                 if let Some(&'=') = self.input.peek() {
                     self.input.next();
                     Some(Token::GreaterThanOrEq)
                 } else {
                     Some(Token::GreaterThan)
-                } 
+                }
             }
             '<' => {
                 if let Some(&'=') = self.input.peek() {
                     self.input.next();
                     Some(Token::LessThanOrEq)
+                } else if let Some(&'>') = self.input.peek() {
+                    self.input.next();
+                    Some(Token::NotEqual)
                 } else {
                     Some(Token::LessThan)
                 }
             }
-            _ => None, // Karakter aneh diabaikan
+            '"' | '\'' => {
+                // Kembalikan karakter dan scan string
+                Some(Token::StringLiteral(String::new()))
+            }
+            _ => None,
         }
     }
-} // <--- KURUNG PENUTUP IMPL ADA DI SINI
+}
