@@ -10,229 +10,194 @@ use parser::Parser;
 use std::env;
 use std::io::{self, Write};
 
-// ANSI Color Codes
+// ═══════════════════════════════════════════════════════════════════════════════
+// WARNA TERMINAL (ANSI Escape Codes)
+// ═══════════════════════════════════════════════════════════════════════════════
 const RESET: &str = "\x1b[0m";
 const BOLD: &str = "\x1b[1m";
-const DIM: &str = "\x1b[2m";
-const ITALIC: &str = "\x1b[3m";
-
-const RED: &str = "\x1b[31m";
+const CYAN: &str = "\x1b[36m";
 const GREEN: &str = "\x1b[32m";
 const YELLOW: &str = "\x1b[33m";
-const BLUE: &str = "\x1b[34m";
-const MAGENTA: &str = "\x1b[35m";
-const CYAN: &str = "\x1b[36m";
+const RED: &str = "\x1b[31m";
 const WHITE: &str = "\x1b[37m";
+const MAGENTA: &str = "\x1b[35m";
+const DIM: &str = "\x1b[2m";
 
-const BG_BLUE: &str = "\x1b[44m";
-const BG_GRAY: &str = "\x1b[48;5;236m";
-
+// ═══════════════════════════════════════════════════════════════════════════════
+// TAMPILAN UI
+// ═══════════════════════════════════════════════════════════════════════════════
 fn print_banner() {
-    println!();
-    println!("  {CYAN}{BOLD}╔══════════════════════════════════════════════════════════════╗{RESET}");
-    println!("  {CYAN}{BOLD}║{RESET}  {YELLOW}{BOLD}  ██████╗███████╗██╗   ██╗     ██████╗ ██╗     {RESET}         {CYAN}{BOLD}║{RESET}");
-    println!("  {CYAN}{BOLD}║{RESET}  {YELLOW}{BOLD} ██╔════╝██╔════╝██║   ██║    ██╔═══██╗██║     {RESET}         {CYAN}{BOLD}║{RESET}");
-    println!("  {CYAN}{BOLD}║{RESET}  {YELLOW}{BOLD} ██║     ███████╗██║   ██║    ██║   ██║██║     {RESET}         {CYAN}{BOLD}║{RESET}");
-    println!("  {CYAN}{BOLD}║{RESET}  {YELLOW}{BOLD} ██║     ╚════██║╚██╗ ██╔╝    ██║▄▄ ██║██║     {RESET}         {CYAN}{BOLD}║{RESET}");
-    println!("  {CYAN}{BOLD}║{RESET}  {YELLOW}{BOLD} ╚██████╗███████║ ╚████╔╝     ╚██████╔╝███████╗{RESET}         {CYAN}{BOLD}║{RESET}");
-    println!("  {CYAN}{BOLD}║{RESET}  {YELLOW}{BOLD}  ╚═════╝╚══════╝  ╚═══╝       ╚══▀▀═╝ ╚══════╝{RESET}         {CYAN}{BOLD}║{RESET}");
-    println!("  {CYAN}{BOLD}║{RESET}                                                              {CYAN}{BOLD}║{RESET}");
-    println!("  {CYAN}{BOLD}║{RESET}  {WHITE}{ITALIC}     Mini SQL Engine untuk Query File CSV{RESET}               {CYAN}{BOLD}║{RESET}");
-    println!("  {CYAN}{BOLD}╚══════════════════════════════════════════════════════════════╝{RESET}");
-    println!();
+    println!("\n{CYAN}{BOLD}");
+    println!("  ╔═══════════════════════════════════════════════════╗");
+    println!("  ║         CSV_QL - Mini SQL untuk File CSV          ║");
+    println!("  ╚═══════════════════════════════════════════════════╝");
+    println!("{RESET}");
 }
 
 fn print_help() {
-    println!("  {BLUE}{BOLD}📚 BANTUAN PENGGUNAAN{RESET}");
-    println!("  {DIM}─────────────────────────────────────────────────────{RESET}");
-    println!();
-    println!("  {YELLOW}{BOLD}Syntax:{RESET}");
-    println!("    SELECT <kolom> FROM <file.csv> [WHERE <kondisi>] [LIMIT n]");
-    println!();
-    println!("  {YELLOW}{BOLD}Contoh Query:{RESET}");
-    println!("    {GREEN}• SELECT * FROM data.csv{RESET}");
-    println!("    {GREEN}• SELECT nama, umur FROM data.csv{RESET}");
-    println!("    {GREEN}• SELECT * FROM data.csv WHERE umur > 20{RESET}");
-    println!("    {GREEN}• SELECT * FROM data.csv WHERE umur > 20 AND umur < 30{RESET}");
-    println!("    {GREEN}• SELECT * FROM data.csv WHERE kota = \"Jakarta\"{RESET}");
-    println!("    {GREEN}• SELECT * FROM data.csv LIMIT 5{RESET}");
-    println!();
-    println!("  {YELLOW}{BOLD}Operator:{RESET}");
-    println!("    {CYAN}=  !=  >  <  >=  <=  AND  OR{RESET}");
-    println!();
-    println!("  {YELLOW}{BOLD}Perintah:{RESET}");
-    println!("    {MAGENTA}help{RESET}    - Tampilkan bantuan ini");
-    println!("    {MAGENTA}clear{RESET}   - Bersihkan layar");
-    println!("    {MAGENTA}exit{RESET}    - Keluar dari program");
-    println!();
+    println!("
+{YELLOW}{BOLD}═══════════════════════════════════════════════════════════════════════════════
+                            📚 BANTUAN CSV_QL
+═══════════════════════════════════════════════════════════════════════════════{RESET}
+
+{CYAN}{BOLD}SYNTAX DASAR:{RESET}
+  SELECT <kolom> FROM <file.csv> [WHERE <kondisi>] [LIMIT n]
+
+{CYAN}{BOLD}CONTOH QUERY:{RESET}
+
+  {GREEN}1. Ambil semua data:{RESET}
+     SELECT * FROM data.csv
+
+  {GREEN}2. Pilih kolom tertentu:{RESET}
+     SELECT nama, umur FROM data.csv
+
+  {GREEN}3. Filter dengan WHERE:{RESET}
+     SELECT * FROM data.csv WHERE umur > 20
+     SELECT * FROM data.csv WHERE kota = \"Jakarta\"
+
+  {GREEN}4. Kombinasi kondisi (AND/OR):{RESET}
+     SELECT * FROM data.csv WHERE umur > 20 AND umur < 30
+     SELECT * FROM data.csv WHERE kota = \"Jakarta\" OR kota = \"Bandung\"
+
+  {GREEN}5. Batasi hasil dengan LIMIT:{RESET}
+     SELECT * FROM data.csv LIMIT 5
+     SELECT nama FROM data.csv WHERE umur > 25 LIMIT 10
+
+{CYAN}{BOLD}OPERATOR YANG DIDUKUNG:{RESET}
+  =   (sama dengan)        !=  (tidak sama)
+  >   (lebih besar)        <   (lebih kecil)
+  >=  (lebih besar/sama)   <=  (lebih kecil/sama)
+  AND (dan)                OR  (atau)
+
+{CYAN}{BOLD}PERINTAH REPL:{RESET}
+  {MAGENTA}help{RESET}  - Tampilkan bantuan ini
+  {MAGENTA}clear{RESET} - Bersihkan layar  
+  {MAGENTA}exit{RESET}  - Keluar program
+
+{YELLOW}═══════════════════════════════════════════════════════════════════════════════{RESET}
+");
 }
 
-fn print_divider() {
-    println!("  {DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}");
-}
-
+// ═══════════════════════════════════════════════════════════════════════════════
+// EKSEKUSI QUERY
+// ═══════════════════════════════════════════════════════════════════════════════
 fn execute_sql(input: &str) {
-    println!();
-    println!("  {BLUE}{BOLD}📝 Query:{RESET} {WHITE}{input}{RESET}");
-    print_divider();
+    println!("\n  {DIM}Query: {input}{RESET}");
 
-    // Lexing
+    // 1. Lexing (pecah string jadi tokens)
     let mut lexer = Lexer::new(input);
-    let mut tokens = Vec::new();
-    while let Some(token) = lexer.next_token() {
-        tokens.push(token);
-    }
+    let tokens: Vec<_> = std::iter::from_fn(|| lexer.next_token()).collect();
 
-    // Parsing
+    // 2. Parsing (tokens jadi AST)
     let mut parser = Parser::new(tokens);
-    match parser.parse() {
-        Ok(ast) => {
-            // Execute
-            match execute_query(ast) {
-                Ok((headers, rows)) => {
-                    if rows.is_empty() {
-                        println!("  {YELLOW}⚠️  Tidak ada data yang cocok dengan query.{RESET}");
-                    } else {
-                        print_table(&headers, &rows);
-                    }
-                }
-                Err(e) => {
-                    println!("  {RED}{BOLD}❌ Runtime Error:{RESET} {RED}{e}{RESET}");
-                }
-            }
+    let ast = match parser.parse() {
+        Ok(ast) => ast,
+        Err(e) => return println!("  {RED}❌ Parse Error: {e}{RESET}\n"),
+    };
+
+    // 3. Execute (jalankan query)
+    match execute_query(ast) {
+        Ok((_, rows)) if rows.is_empty() => {
+            println!("  {YELLOW}⚠️ Tidak ada data yang cocok.{RESET}\n");
         }
-        Err(e) => {
-            println!("  {RED}{BOLD}❌ Parse Error:{RESET} {RED}{e}{RESET}");
-        }
+        Ok((headers, rows)) => print_table(&headers, &rows),
+        Err(e) => println!("  {RED}❌ Error: {e}{RESET}\n"),
     }
-    println!();
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// TAMPILKAN TABEL
+// ═══════════════════════════════════════════════════════════════════════════════
 fn print_table(headers: &[String], rows: &[Vec<String>]) {
-    // Calculate column widths
-    let mut widths: Vec<usize> = headers.iter().map(|h| h.len()).collect();
-    for row in rows {
-        for (i, cell) in row.iter().enumerate() {
-            if i < widths.len() && cell.len() > widths[i] {
-                widths[i] = cell.len();
-            }
+    // Hitung lebar kolom
+    let widths: Vec<usize> = headers
+        .iter()
+        .enumerate()
+        .map(|(i, h)| {
+            let max_data = rows.iter().filter_map(|r| r.get(i)).map(|c| c.len()).max().unwrap_or(0);
+            h.len().max(max_data) + 2
+        })
+        .collect();
+
+    // Fungsi helper untuk buat garis
+    let line = |left: &str, mid: &str, right: &str| {
+        print!("  {CYAN}{left}");
+        for (i, w) in widths.iter().enumerate() {
+            print!("{}", "─".repeat(*w));
+            print!("{}", if i < widths.len() - 1 { mid } else { right });
         }
-    }
+        println!("{RESET}");
+    };
 
-    // Add padding
-    for w in &mut widths {
-        *w += 2;
-    }
-
-    // Print top border
-    print!("  {CYAN}╭");
-    for (i, w) in widths.iter().enumerate() {
-        print!("{}", "─".repeat(*w));
-        if i < widths.len() - 1 {
-            print!("┬");
-        }
-    }
-    println!("╮{RESET}");
-
-    // Print headers
+    // Print tabel
+    line("╭", "┬", "╮");
+    
+    // Header
     print!("  {CYAN}│{RESET}");
-    for (i, header) in headers.iter().enumerate() {
-        print!("{BG_GRAY}{YELLOW}{BOLD} {:^width$}{RESET}", header, width = widths[i] - 1);
-        print!("{CYAN}│{RESET}");
+    for (i, h) in headers.iter().enumerate() {
+        print!("{YELLOW}{BOLD} {:^w$}{RESET}{CYAN}│{RESET}", h, w = widths[i] - 1);
     }
     println!();
+    
+    line("├", "┼", "┤");
 
-    // Print header separator
-    print!("  {CYAN}├");
-    for (i, w) in widths.iter().enumerate() {
-        print!("{}", "─".repeat(*w));
-        if i < widths.len() - 1 {
-            print!("┼");
-        }
-    }
-    println!("┤{RESET}");
-
-    // Print rows
-    for (row_idx, row) in rows.iter().enumerate() {
-        let bg = if row_idx % 2 == 0 { "" } else { "\x1b[48;5;234m" };
+    // Data rows
+    for row in rows {
         print!("  {CYAN}│{RESET}");
         for (i, cell) in row.iter().enumerate() {
             if i < widths.len() {
-                print!("{bg}{WHITE} {:^width$}{RESET}", cell, width = widths[i] - 1);
-                print!("{CYAN}│{RESET}");
+                print!("{WHITE} {:^w$}{RESET}{CYAN}│{RESET}", cell, w = widths[i] - 1);
             }
         }
         println!();
     }
-
-    // Print bottom border
-    print!("  {CYAN}╰");
-    for (i, w) in widths.iter().enumerate() {
-        print!("{}", "─".repeat(*w));
-        if i < widths.len() - 1 {
-            print!("┴");
-        }
-    }
-    println!("╯{RESET}");
-
-    // Print summary
-    println!();
-    println!("  {GREEN}{BOLD}✅ {}{RESET} {GREEN}baris ditemukan{RESET}", rows.len());
+    
+    line("╰", "┴", "╯");
+    println!("  {GREEN}✅ {} baris ditemukan{RESET}\n", rows.len());
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN - Entry Point
+// ═══════════════════════════════════════════════════════════════════════════════
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    // Direct query mode: csv_ql "SELECT * FROM data.csv"
+    // Mode 1: Direct query dari command line
+    // Contoh: csv_ql "SELECT * FROM data.csv"
     if args.len() > 1 {
-        let query = args[1..].join(" ");
         print_banner();
-        execute_sql(&query);
+        execute_sql(&args[1..].join(" "));
         return;
     }
 
-    // Interactive REPL mode
+    // Mode 2: Interactive REPL
     print_banner();
-    println!("  {WHITE}Ketik {MAGENTA}{BOLD}help{RESET}{WHITE} untuk bantuan, {MAGENTA}{BOLD}exit{RESET}{WHITE} untuk keluar.{RESET}");
-    println!();
+    println!("  Ketik {MAGENTA}help{RESET} untuk bantuan, {MAGENTA}exit{RESET} untuk keluar.\n");
 
     loop {
+        // Tampilkan prompt
         print!("  {CYAN}{BOLD}csv_ql>{RESET} ");
         io::stdout().flush().unwrap();
 
+        // Baca input
         let mut input = String::new();
-        match io::stdin().read_line(&mut input) {
-            Ok(0) => break, // EOF
-            Ok(_) => {
-                let input = input.trim();
-                if input.is_empty() {
-                    continue;
-                }
+        if io::stdin().read_line(&mut input).unwrap_or(0) == 0 {
+            break; // EOF
+        }
 
-                match input.to_lowercase().as_str() {
-                    "exit" | "quit" | "q" => {
-                        println!();
-                        println!("  {GREEN}👋 Sampai jumpa!{RESET}");
-                        println!();
-                        break;
-                    }
-                    "help" | "?" => {
-                        println!();
-                        print_help();
-                    }
-                    "clear" | "cls" => {
-                        print!("\x1b[2J\x1b[H");
-                        print_banner();
-                    }
-                    _ => {
-                        execute_sql(input);
-                    }
-                }
-            }
-            Err(e) => {
-                println!("  {RED}Error membaca input: {e}{RESET}");
+        // Proses perintah
+        match input.trim().to_lowercase().as_str() {
+            "" => continue,
+            "exit" | "quit" | "q" => {
+                println!("\n  {GREEN}👋 Sampai jumpa!{RESET}\n");
                 break;
             }
+            "help" | "?" => print_help(),
+            "clear" | "cls" => {
+                print!("\x1b[2J\x1b[H");
+                print_banner();
+            }
+            _ => execute_sql(input.trim()),
         }
     }
 }
