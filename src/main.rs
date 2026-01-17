@@ -1,12 +1,18 @@
 mod ast;
+mod dfa;
 mod engine;
+mod ir;
 mod lexer;
 mod parser;
+mod semantic;
 mod token;
 
+use dfa::DFATracker;
 use engine::execute_query;
+use ir::{ast_to_ir, print_query_plan};
 use lexer::Lexer;
 use parser::Parser;
+use semantic::analyze;
 use std::env;
 use std::io::{self, Write};
 
@@ -70,38 +76,98 @@ fn print_help() {
   AND (dan)                OR  (atau)
 
 {CYAN}{BOLD}PERINTAH REPL:{RESET}
-  {MAGENTA}help{RESET}  - Tampilkan bantuan ini
-  {MAGENTA}clear{RESET} - Bersihkan layar  
-  {MAGENTA}exit{RESET}  - Keluar program
+  {MAGENTA}help{RESET}   - Tampilkan bantuan ini
+  {MAGENTA}clear{RESET}  - Bersihkan layar  
+  {MAGENTA}dfa{RESET}    - Tampilkan diagram DFA lexer
+  {MAGENTA}exit{RESET}   - Keluar program
 
 {YELLOW}═══════════════════════════════════════════════════════════════════════════════{RESET}
 ");
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// EKSEKUSI QUERY
+// EKSEKUSI QUERY - Pipeline Kompilasi
 // ═══════════════════════════════════════════════════════════════════════════════
-fn execute_sql(input: &str) {
+fn execute_sql(input: &str, verbose: bool) {
     println!("\n  {DIM}Query: {input}{RESET}");
 
-    // 1. Lexing (pecah string jadi tokens)
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ TAHAP 1: LEXICAL ANALYSIS (String → Tokens)                            │
+    // └─────────────────────────────────────────────────────────────────────────┘
     let mut lexer = Lexer::new(input);
     let tokens: Vec<_> = std::iter::from_fn(|| lexer.next_token()).collect();
+    
+    if verbose {
+        println!("\n  {CYAN}[1] LEXICAL ANALYSIS{RESET}");
+        println!("  Tokens: {:?}", tokens);
+    }
 
-    // 2. Parsing (tokens jadi AST)
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ TAHAP 2: SYNTAX ANALYSIS / PARSING (Tokens → AST)                      │
+    // └─────────────────────────────────────────────────────────────────────────┘
     let mut parser = Parser::new(tokens);
     let ast = match parser.parse() {
         Ok(ast) => ast,
         Err(e) => return println!("  {RED}❌ Parse Error: {e}{RESET}\n"),
     };
+    
+    if verbose {
+        println!("\n  {CYAN}[2] SYNTAX ANALYSIS{RESET}");
+        println!("  AST: {:?}", ast);
+    }
 
-    // 3. Execute (jalankan query)
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ TAHAP 3: SEMANTIC ANALYSIS (Validasi AST)                              │
+    // └─────────────────────────────────────────────────────────────────────────┘
+    match analyze(&ast) {
+        Ok(result) => {
+            if verbose {
+                println!("\n  {CYAN}[3] SEMANTIC ANALYSIS{RESET}");
+            }
+            
+            // Tampilkan warning jika ada
+            for warn in &result.warnings {
+                println!("  {YELLOW}⚠️ Warning: {warn}{RESET}");
+            }
+            
+            // Stop jika ada error semantik
+            if !result.valid {
+                for err in &result.errors {
+                    println!("  {RED}❌ Semantic Error: {err}{RESET}");
+                }
+                return;
+            }
+            
+            if verbose {
+                println!("  ✓ Validasi OK");
+            }
+        }
+        Err(e) => return println!("  {RED}❌ Semantic Error: {e}{RESET}\n"),
+    }
+
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ TAHAP 4: IR GENERATION (AST → Query Plan)                              │
+    // └─────────────────────────────────────────────────────────────────────────┘
+    let query_plan = ast_to_ir(&ast);
+    
+    if verbose {
+        println!("\n  {CYAN}[4] IR GENERATION{RESET}");
+        print_query_plan(&query_plan);
+    }
+
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ TAHAP 5: EXECUTION (Jalankan Query Plan)                               │
+    // └─────────────────────────────────────────────────────────────────────────┘
+    if verbose {
+        println!("\n  {CYAN}[5] EXECUTION{RESET}");
+    }
+    
     match execute_query(ast) {
         Ok((_, rows)) if rows.is_empty() => {
             println!("  {YELLOW}⚠️ Tidak ada data yang cocok.{RESET}\n");
         }
         Ok((headers, rows)) => print_table(&headers, &rows),
-        Err(e) => println!("  {RED}❌ Error: {e}{RESET}\n"),
+        Err(e) => println!("  {RED}❌ Runtime Error: {e}{RESET}\n"),
     }
 }
 
@@ -162,17 +228,27 @@ fn print_table(headers: &[String], rows: &[Vec<String>]) {
 fn main() {
     let args: Vec<String> = env::args().collect();
 
+    // Cek flag --verbose atau -v
+    let verbose = args.iter().any(|a| a == "--verbose" || a == "-v");
+    
     // Mode 1: Direct query dari command line
     // Contoh: csv_ql "SELECT * FROM data.csv"
-    if args.len() > 1 {
+    // Contoh: csv_ql "SELECT * FROM data.csv" --verbose
+    if args.len() > 1 && !args[1].starts_with('-') {
+        let query: String = args[1..].iter()
+            .filter(|a| *a != "--verbose" && *a != "-v")
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(" ");
         print_banner();
-        execute_sql(&args[1..].join(" "));
+        execute_sql(&query, verbose);
         return;
     }
 
     // Mode 2: Interactive REPL
     print_banner();
-    println!("  Ketik {MAGENTA}help{RESET} untuk bantuan, {MAGENTA}exit{RESET} untuk keluar.\n");
+    println!("  Ketik {MAGENTA}help{RESET} untuk bantuan, {MAGENTA}exit{RESET} untuk keluar.");
+    println!("  Tambahkan {MAGENTA}--verbose{RESET} di akhir query untuk lihat detail kompilasi.\n");
 
     loop {
         // Tampilkan prompt
@@ -185,8 +261,16 @@ fn main() {
             break; // EOF
         }
 
+        let input = input.trim();
+        let verbose_mode = input.ends_with("--verbose") || input.ends_with("-v");
+        let clean_input = input
+            .replace("--verbose", "")
+            .replace("-v", "")
+            .trim()
+            .to_string();
+
         // Proses perintah
-        match input.trim().to_lowercase().as_str() {
+        match clean_input.to_lowercase().as_str() {
             "" => continue,
             "exit" | "quit" | "q" => {
                 println!("\n  {GREEN}👋 Sampai jumpa!{RESET}\n");
@@ -197,7 +281,8 @@ fn main() {
                 print!("\x1b[2J\x1b[H");
                 print_banner();
             }
-            _ => execute_sql(input.trim()),
+            "dfa" => DFATracker::print_dfa_diagram(),
+            _ => execute_sql(&clean_input, verbose_mode),
         }
     }
 }

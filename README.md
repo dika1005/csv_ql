@@ -1,172 +1,300 @@
-# CSV_QL - Mini SQL untuk File CSV
+# CSV_QL - Mini SQL Query Engine untuk File CSV
 
-Program sederhana untuk melakukan query SQL pada file CSV.
+**Tugas Akhir Mata Kuliah Automata dan Teknik Kompilasi**
 
-## 🚀 Cara Menjalankan
+Program mini query engine yang mengimplementasikan konsep:
+- Lexical Analysis (DFA-based Lexer)
+- Syntax Analysis (Recursive Descent Parser)
+- Abstract Syntax Tree (AST)
+- Semantic Analysis
+- Intermediate Representation (IR/Query Plan)
+- Interpreter/Execution Engine
 
-```bash
-# Build dulu
-cargo build --release
+---
 
-# Jalankan mode interaktif
-cargo run
+## 🏗️ Arsitektur Sistem
 
-# Atau langsung query dari command line
-cargo run "SELECT * FROM data.csv"
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   INPUT     │    │   LEXER     │    │   PARSER    │
+│   Query     │───►│   (DFA)     │───►│   (CFG)     │
+│   String    │    │   Tokens    │    │   AST       │
+└─────────────┘    └─────────────┘    └─────────────┘
+                                            │
+                   ┌─────────────┐          ▼
+                   │  EXECUTOR   │    ┌─────────────┐
+                   │  (Engine)   │◄───│  SEMANTIC   │
+                   │  Results    │    │  ANALYZER   │
+                   └─────────────┘    └─────────────┘
+                         ▲                  │
+                         │            ┌─────────────┐
+                         └────────────│     IR      │
+                                      │ Query Plan  │
+                                      └─────────────┘
 ```
 
 ---
 
-## 📖 SYNTAX YANG DIDUKUNG
+## 📜 CONTEXT-FREE GRAMMAR (CFG)
 
-### Format Dasar
-```sql
-SELECT <kolom> FROM <file.csv> [WHERE <kondisi>] [LIMIT n]
+### Notasi BNF
+
+```bnf
+<query>       ::= SELECT <columns> FROM <table> <where_opt> <limit_opt>
+
+<columns>     ::= "*" | <column_list>
+<column_list> ::= <identifier> | <identifier> "," <column_list>
+
+<table>       ::= <identifier>
+
+<where_opt>   ::= ε | WHERE <expression>
+<limit_opt>   ::= ε | LIMIT <number>
+
+<expression>  ::= <or_expr>
+<or_expr>     ::= <and_expr> | <and_expr> OR <or_expr>
+<and_expr>    ::= <comparison> | <comparison> AND <and_expr>
+
+<comparison>  ::= <leaf> <comp_op> <leaf>
+<comp_op>     ::= "=" | "!=" | ">" | "<" | ">=" | "<="
+
+<leaf>        ::= <identifier> | <number> | <string_literal>
+
+<identifier>  ::= [a-zA-Z_][a-zA-Z0-9_.]*
+<number>      ::= [0-9]+(\.[0-9]+)?
+<string_literal> ::= '"' [^"]* '"' | "'" [^']* "'"
+```
+
+### Diagram Syntax (Railroad)
+
+```
+SELECT ──► columns ──► FROM ──► table ──┬──► WHERE ──► expr ──┬──► LIMIT ──► num ──►
+                                        │                     │
+                                        └─────────────────────┴────────────────────►
+```
+
+---
+
+## 🔄 DFA DIAGRAM (Lexer)
+
+```
+                    ┌─────────────────────────────────────────────────────────────┐
+                    │                      DFA LEXER                              │
+                    ├─────────────────────────────────────────────────────────────┤
+                    │                                                             │
+                    │          ┌─────────┐                                        │
+                    │    ┌────►│q1:Ident │────► [KEYWORD/IDENTIFIER]              │
+                    │    │a-z  └────┬────┘                                        │
+                    │    │          │a-z,0-9,_                                    │
+                    │    │          ▼──────┘                                      │
+                    │  ┌─┴──┐                                                     │
+                    │  │ q0 │   ┌─────────┐                                       │
+                    │  │Start──►│q2:Number│────► [NUMBER]                         │
+                    │  └─┬──┘0-9└────┬────┘                                       │
+                    │    │          │0-9,.                                        │
+                    │    │          ▼──────┘                                      │
+                    │    │                                                        │
+                    │    │"    ┌─────────┐                                        │
+                    │    └────►│q3:String│────► [STRING_LITERAL]                  │
+                    │          └────┬────┘                                        │
+                    │    │          │ [^"]                                        │
+                    │    │          ▼──────┘                                      │
+                    │    │=><                                                     │
+                    │    └────►[q4:Operator]──► [OPERATOR]                        │
+                    │                                                             │
+                    └─────────────────────────────────────────────────────────────┘
+
+State Transitions:
+- q0 (Start)    : State awal
+- q1 (Ident)    : Membaca identifier/keyword (a-z, A-Z, _, 0-9)
+- q2 (Number)   : Membaca angka (0-9, .)
+- q3 (String)   : Membaca string literal (antara " atau ')
+- q4 (Operator) : Membaca operator (=, !=, >, <, >=, <=)
+```
+
+---
+
+## 🎯 TOKEN DEFINITION
+
+| Token Type      | Regular Expression       | Contoh           |
+|-----------------|--------------------------|------------------|
+| SELECT          | `SELECT\|select`         | SELECT           |
+| FROM            | `FROM\|from`             | FROM             |
+| WHERE           | `WHERE\|where`           | WHERE            |
+| LIMIT           | `LIMIT\|limit`           | LIMIT            |
+| AND             | `AND\|and`               | AND              |
+| OR              | `OR\|or`                 | OR               |
+| IDENTIFIER      | `[a-zA-Z_][a-zA-Z0-9_.]*`| nama, data.csv   |
+| NUMBER          | `[0-9]+(\.[0-9]+)?`      | 25, 3.14         |
+| STRING_LITERAL  | `"[^"]*"\|'[^']*'`       | "Jakarta"        |
+| STAR            | `\*`                     | *                |
+| EQUAL           | `=`                      | =                |
+| NOT_EQUAL       | `!=`                     | !=               |
+| GREATER         | `>`                      | >                |
+| LESS            | `<`                      | <                |
+| GREATER_EQ      | `>=`                     | >=               |
+| LESS_EQ         | `<=`                     | <=               |
+| COMMA           | `,`                      | ,                |
+
+---
+
+## 🌳 ABSTRACT SYNTAX TREE (AST)
+
+### Struktur AST
+
+```rust
+// Statement (Root Node)
+Statement::Select {
+    columns: Vec<String>,      // Kolom yang dipilih
+    table: String,             // Nama file CSV
+    where_clause: Option<Expr>,// Kondisi filter (opsional)
+    limit: Option<usize>,      // Batas hasil (opsional)
+}
+
+// Expression Node (untuk WHERE clause)
+Expr::BinaryOp {
+    left: Box<Expr>,           // Operand kiri
+    op: Op,                    // Operator
+    right: Box<Expr>,          // Operand kanan
+}
+Expr::Identifier(String)       // Nama kolom
+Expr::Number(f64)              // Nilai numerik
+Expr::StringLiteral(String)    // Nilai string
+```
+
+### Contoh AST
+
+Query: `SELECT nama, umur FROM data.csv WHERE umur > 20 AND kota = "Jakarta" LIMIT 5`
+
+```
+                    Select
+                    /    \
+            columns       table: "data.csv"
+           /      \              |
+       "nama"   "umur"      where_clause
+                                 |
+                              BinaryOp (AND)
+                             /            \
+                    BinaryOp (>)      BinaryOp (=)
+                    /       \         /        \
+              Ident       Number   Ident    StringLit
+              "umur"       20      "kota"   "Jakarta"
+```
+
+---
+
+## 📊 INTERMEDIATE REPRESENTATION (IR)
+
+Query Plan yang dihasilkan sebelum eksekusi:
+
+```
+Query: SELECT nama FROM data.csv WHERE umur > 20 LIMIT 5
+
+📋 QUERY PLAN (IR):
+┌─────────────────────────────────────────────────┐
+│  1. 📂 SCAN: data.csv                           │  ← Baca file
+│       ↓                                         │
+│  2. 🔍 FILTER: umur > 20                        │  ← Filter WHERE
+│       ↓                                         │
+│  3. 📊 PROJECT: nama                            │  ← Pilih kolom
+│       ↓                                         │
+│  4. ✂️ LIMIT: 5                                 │  ← Batasi hasil
+└─────────────────────────────────────────────────┘
+```
+
+---
+
+## 🚀 Cara Menjalankan
+
+```bash
+# Build
+cargo build --release
+
+# Mode Interaktif (REPL)
+cargo run
+
+# Direct Query
+cargo run -- "SELECT * FROM data.csv"
+
+# Dengan Detail Kompilasi (verbose)
+cargo run -- "SELECT * FROM data.csv" --verbose
 ```
 
 ---
 
 ## 📝 CONTOH QUERY
 
-### 1️⃣ Ambil Semua Data
+### 1. Ambil Semua Data
 ```sql
 SELECT * FROM data.csv
 ```
-**Output:** Semua kolom dan baris dari `data.csv`
 
----
-
-### 2️⃣ Pilih Kolom Tertentu
+### 2. Pilih Kolom Tertentu
 ```sql
 SELECT nama, umur FROM data.csv
 ```
-**Output:** Hanya kolom `nama` dan `umur`
 
-```sql
-SELECT nama FROM data.csv
-```
-**Output:** Hanya kolom `nama`
-
----
-
-### 3️⃣ Filter dengan WHERE
-
-**Perbandingan Angka:**
+### 3. Filter dengan WHERE
 ```sql
 SELECT * FROM data.csv WHERE umur > 20
-SELECT * FROM data.csv WHERE umur >= 25
-SELECT * FROM data.csv WHERE umur < 30
-SELECT * FROM data.csv WHERE umur <= 18
-SELECT * FROM data.csv WHERE umur = 22
-SELECT * FROM data.csv WHERE umur != 25
-```
-
-**Perbandingan String (gunakan tanda kutip):**
-```sql
 SELECT * FROM data.csv WHERE kota = "Jakarta"
-SELECT * FROM data.csv WHERE nama = "Budi"
-SELECT * FROM data.csv WHERE kota != "Bandung"
 ```
 
----
-
-### 4️⃣ Kombinasi Kondisi dengan AND/OR
-
-**AND (semua kondisi harus benar):**
+### 4. Kombinasi AND/OR
 ```sql
 SELECT * FROM data.csv WHERE umur > 20 AND umur < 30
-SELECT * FROM data.csv WHERE kota = "Jakarta" AND umur > 25
-```
-
-**OR (salah satu kondisi benar):**
-```sql
 SELECT * FROM data.csv WHERE kota = "Jakarta" OR kota = "Bandung"
-SELECT * FROM data.csv WHERE umur < 20 OR umur > 35
 ```
 
-**Kombinasi AND dan OR:**
-```sql
-SELECT * FROM data.csv WHERE umur > 20 AND kota = "Jakarta" OR kota = "Surabaya"
-```
-
----
-
-### 5️⃣ Batasi Hasil dengan LIMIT
+### 5. Dengan LIMIT
 ```sql
 SELECT * FROM data.csv LIMIT 5
-SELECT nama, umur FROM data.csv LIMIT 3
-SELECT * FROM data.csv WHERE umur > 20 LIMIT 10
+SELECT nama FROM data.csv WHERE umur > 25 LIMIT 10
 ```
 
 ---
 
-### 6️⃣ Kombinasi Lengkap
-```sql
-SELECT nama, umur, kota FROM data.csv WHERE umur > 18 AND umur < 35 LIMIT 5
+## 🔧 Perintah REPL
+
+| Perintah    | Fungsi                           |
+|-------------|----------------------------------|
+| `help`      | Tampilkan bantuan                |
+| `clear`     | Bersihkan layar                  |
+| `dfa`       | Tampilkan diagram DFA            |
+| `exit`      | Keluar program                   |
+| `--verbose` | Tambahkan di akhir query untuk detail |
+
+---
+
+## 📁 Struktur Project
+
+```
+csv_ql/
+├── Cargo.toml          # Konfigurasi project
+├── README.md           # Dokumentasi
+├── data.csv            # Contoh data
+└── src/
+    ├── main.rs         # Entry point + REPL
+    ├── token.rs        # Definisi Token
+    ├── lexer.rs        # Lexical Analyzer (DFA)
+    ├── ast.rs          # Abstract Syntax Tree
+    ├── parser.rs       # Syntax Analyzer (CFG)
+    ├── semantic.rs     # Semantic Analyzer
+    ├── ir.rs           # Intermediate Representation
+    ├── dfa.rs          # DFA Visualization
+    └── engine.rs       # Query Executor
 ```
 
 ---
 
-## ⚙️ OPERATOR YANG DIDUKUNG
+## ✅ Komponen yang Diimplementasi
 
-| Operator | Fungsi                  | Contoh            |
-|----------|-------------------------|-------------------|
-| `=`      | Sama dengan             | `umur = 25`       |
-| `!=`     | Tidak sama dengan       | `kota != "Jakarta"` |
-| `>`      | Lebih besar             | `umur > 20`       |
-| `<`      | Lebih kecil             | `umur < 30`       |
-| `>=`     | Lebih besar atau sama   | `umur >= 18`      |
-| `<=`     | Lebih kecil atau sama   | `umur <= 25`      |
-| `AND`    | Dan (kedua kondisi)     | `umur > 20 AND umur < 30` |
-| `OR`     | Atau (salah satu)       | `kota = "A" OR kota = "B"` |
-
----
-
-## 🔧 PERINTAH INTERAKTIF
-
-| Perintah | Fungsi                      |
-|----------|-----------------------------|
-| `help`   | Tampilkan bantuan           |
-| `clear`  | Bersihkan layar terminal    |
-| `exit`   | Keluar dari program         |
-
----
-
-## 📁 Format File CSV
-
-File CSV harus memiliki header di baris pertama:
-
-```csv
-nama,umur,kota
-Dika,22,Jakarta
-Budi,19,Bandung
-Siti,25,Surabaya
-```
-
----
-
-## 🧪 Contoh Penggunaan Lengkap
-
-```
-csv_ql> SELECT * FROM data.csv
-┌───────┬──────┬──────────┐
-│ nama  │ umur │   kota   │
-├───────┼──────┼──────────┤
-│ Dika  │  22  │ Jakarta  │
-│ Budi  │  19  │ Bandung  │
-│ Siti  │  25  │ Surabaya │
-└───────┴──────┴──────────┘
-✅ 3 baris ditemukan
-
-csv_ql> SELECT nama FROM data.csv WHERE umur > 20 LIMIT 2
-┌───────┐
-│ nama  │
-├───────┤
-│ Dika  │
-│ Siti  │
-└───────┘
-✅ 2 baris ditemukan
-
-csv_ql> exit
-👋 Sampai jumpa!
-```
+| Komponen                | File         | Status |
+|-------------------------|--------------|--------|
+| Token & Regex           | token.rs     | ✅     |
+| Lexer (DFA-based)       | lexer.rs     | ✅     |
+| Parser (Recursive Desc) | parser.rs    | ✅     |
+| AST                     | ast.rs       | ✅     |
+| Semantic Analyzer       | semantic.rs  | ✅     |
+| IR / Query Plan         | ir.rs        | ✅     |
+| DFA Visualization       | dfa.rs       | ✅     |
+| Interpreter/Executor    | engine.rs    | ✅     |
