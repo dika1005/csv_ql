@@ -51,7 +51,7 @@ TIPS:
 
 import csv
 from typing import Tuple, List, Dict, Optional
-# from ast_nodes import Statement, Expr, Op  # Uncomment setelah ast_nodes.py selesai
+# from ast_nodes import Statement, Expr, Op  # Uncomment setelah ast_nodes.py selesai.
 
 
 def execute_query(query) -> Tuple[List[str], List[List[str]]]:  # query: Statement
