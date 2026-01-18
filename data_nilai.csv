@@ -1,0 +1,22 @@
+nim,nama,mata_kuliah,sks,nilai_huruf,nilai_angka,semester,status
+2023001,Ahmad Rizki,Automata dan Teknik Kompilasi,3,A,4.0,5,Lulus
+2023001,Ahmad Rizki,Struktur Data,3,A,4.0,3,Lulus
+2023001,Ahmad Rizki,Basis Data,3,B,3.0,4,Lulus
+2023002,Budi Santoso,Automata dan Teknik Kompilasi,3,B,3.0,5,Lulus
+2023002,Budi Santoso,Struktur Data,3,C,2.0,3,Lulus
+2023002,Budi Santoso,Basis Data,3,A,4.0,4,Lulus
+2023003,Citra Dewi,Automata dan Teknik Kompilasi,3,A,4.0,5,Lulus
+2023003,Citra Dewi,Struktur Data,3,A,4.0,3,Lulus
+2023003,Citra Dewi,Basis Data,3,A,4.0,4,Lulus
+2023004,Dian Pratama,Automata dan Teknik Kompilasi,3,C,2.0,5,Lulus
+2023004,Dian Pratama,Struktur Data,3,D,1.0,3,Tidak Lulus
+2023004,Dian Pratama,Basis Data,3,B,3.0,4,Lulus
+2023005,Eka Putri,Automata dan Teknik Kompilasi,3,E,0.0,5,Tidak Lulus
+2023005,Eka Putri,Struktur Data,3,C,2.0,3,Lulus
+2023005,Eka Putri,Basis Data,3,D,1.0,3,Tidak Lulus
+2023006,Farhan Akbar,Automata dan Teknik Kompilasi,3,A,4.0,5,Lulus
+2023006,Farhan Akbar,Struktur Data,3,B,3.0,3,Lulus
+2023006,Farhan Akbar,Basis Data,3,B,3.0,4,Lulus
+2023007,Gita Maharani,Automata dan Teknik Kompilasi,3,B,3.0,5,Lulus
+2023007,Gita Maharani,Struktur Data,3,A,4.0,3,Lulus
+2023007,Gita Maharani,Basis Data,3,C,2.0,4,Lulus

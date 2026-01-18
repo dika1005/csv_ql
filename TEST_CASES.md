@@ -1,78 +1,121 @@
-# Test Cases untuk CSV_QL
-# Jalankan setiap query di bawah ini untuk testing
+# Test Cases - CSV_QL Query Nilai Mahasiswa
 
-# ==============================================================================
-# TEST CASE 1: Basic SELECT * (Ambil semua data)
-# ==============================================================================
-# Input:
-SELECT * FROM data.csv
+## Data Sample (data_nilai.csv)
 
-# Expected Output: Semua 10 baris data ditampilkan
+```csv
+nim,nama,mata_kuliah,sks,nilai_huruf,nilai_angka,semester,status
+2023001,Ahmad Rizki,Automata dan Teknik Kompilasi,3,A,4.0,5,Lulus
+2023002,Budi Santoso,Automata dan Teknik Kompilasi,3,B,3.0,5,Lulus
+2023003,Citra Dewi,Automata dan Teknik Kompilasi,3,A,4.0,5,Lulus
+...
+```
 
+---
 
-# ==============================================================================
-# TEST CASE 2: SELECT kolom tertentu
-# ==============================================================================
-# Input:
-SELECT nama, kota FROM data.csv
+## Test Case 1: SELECT Semua Data
 
-# Expected Output: Hanya kolom nama dan kota, 10 baris
+**Query:**
+```sql
+SELECT * FROM ../data_nilai.csv
+```
 
+**Expected:** Semua 21 baris data ditampilkan
 
-# ==============================================================================
-# TEST CASE 3: WHERE dengan perbandingan numerik
-# ==============================================================================
-# Input:
-SELECT * FROM data.csv WHERE umur > 25
+---
 
-# Expected Output: 4 baris (Andi=30, Eko=40, Gita=29, Indra=35)
+## Test Case 2: SELECT Kolom Tertentu
 
+**Query:**
+```sql
+SELECT nim, nama, nilai_huruf FROM ../data_nilai.csv
+```
 
-# ==============================================================================
-# TEST CASE 4: WHERE dengan AND
-# ==============================================================================
-# Input:
-SELECT nama, umur FROM data.csv WHERE umur >= 20 AND umur <= 30
+**Expected:** 3 kolom (nim, nama, nilai_huruf) dari semua baris
 
-# Expected Output: 5 baris (Dika=22, Siti=25, Andi=30, Fajar=21, Gita=29)
+---
 
+## Test Case 3: Filter Mahasiswa Nilai A
 
-# ==============================================================================
-# TEST CASE 5: Kombinasi WHERE + LIMIT
-# ==============================================================================
-# Input:
-SELECT * FROM data.csv WHERE umur > 18 LIMIT 3
+**Query:**
+```sql
+SELECT nama, mata_kuliah FROM ../data_nilai.csv WHERE nilai_huruf = "A"
+```
 
-# Expected Output: 3 baris pertama yang umur > 18
+**Expected:** Hanya mahasiswa dengan nilai A
 
+---
 
-# ==============================================================================
-# TEST CASE BONUS: Error Handling - File tidak ada
-# ==============================================================================
-# Input:
+## Test Case 4: Filter Mahasiswa Tidak Lulus
+
+**Query:**
+```sql
+SELECT nim, nama, mata_kuliah, nilai_huruf FROM ../data_nilai.csv WHERE status = "Tidak Lulus"
+```
+
+**Expected:** Mahasiswa yang tidak lulus mata kuliah
+
+---
+
+## Test Case 5: Filter dengan Kondisi Numerik
+
+**Query:**
+```sql
+SELECT nama, nilai_angka FROM ../data_nilai.csv WHERE nilai_angka >= 3.5
+```
+
+**Expected:** Mahasiswa dengan nilai >= 3.5
+
+---
+
+## Test Case 6: Kombinasi AND
+
+**Query:**
+```sql
+SELECT * FROM ../data_nilai.csv WHERE semester = 5 AND nilai_huruf = "A"
+```
+
+**Expected:** Mahasiswa semester 5 dengan nilai A
+
+---
+
+## Test Case 7: Kombinasi OR
+
+**Query:**
+```sql
+SELECT nama, nilai_huruf FROM ../data_nilai.csv WHERE nilai_huruf = "A" OR nilai_huruf = "B"
+```
+
+**Expected:** Mahasiswa dengan nilai A atau B
+
+---
+
+## Test Case 8: LIMIT
+
+**Query:**
+```sql
+SELECT * FROM ../data_nilai.csv LIMIT 5
+```
+
+**Expected:** Hanya 5 baris pertama
+
+---
+
+## Test Case 9: Error - Kolom Tidak Ada
+
+**Query:**
+```sql
+SELECT ipk FROM ../data_nilai.csv
+```
+
+**Expected:** Error - kolom 'ipk' tidak ditemukan
+
+---
+
+## Test Case 10: Error - File Tidak Ada
+
+**Query:**
+```sql
 SELECT * FROM tidak_ada.csv
+```
 
-# Expected Output: Semantic Error: File 'tidak_ada.csv' tidak ditemukan
-
-
-# ==============================================================================
-# TEST CASE BONUS: Error Handling - Kolom tidak ada
-# ==============================================================================
-# Input:
-SELECT nama, alamat FROM data.csv
-
-# Expected Output: Semantic Error: Kolom 'alamat' tidak ada di file 'data.csv'
-
-
-# ==============================================================================
-# Cara menjalankan dengan detail kompilasi (verbose):
-# ==============================================================================
-# Tambahkan --verbose di akhir query, contoh:
-SELECT * FROM data.csv WHERE umur > 25 --verbose
-
-# Ini akan menampilkan:
-# [1] LEXICAL ANALYSIS - Daftar tokens
-# [2] SYNTAX ANALYSIS - AST yang dihasilkan
-# [3] SEMANTIC ANALYSIS - Hasil validasi
-# [4] IR GENERATION - Query Plan
-# [5] EXECUTION - Hasil query
+**Expected:** Error - file tidak ditemukan

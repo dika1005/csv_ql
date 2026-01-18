@@ -234,8 +234,8 @@ class Lexer:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    # Contoh penggunaan lexer
-    query = 'SELECT nama, umur FROM data.csv WHERE umur > 20'
+    # Contoh penggunaan lexer dengan data nilai mahasiswa
+    query = 'SELECT nama, nilai_huruf FROM data_nilai.csv WHERE status = "Lulus"'
     
     print(f"Query: {query}")
     print("\nTokens:")
