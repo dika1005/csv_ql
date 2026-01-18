@@ -1,300 +1,96 @@
-# CSV_QL - Mini SQL Query Engine untuk File CSV
+# CSV_QL Python - Mini SQL untuk File CSV
 
-**Tugas Akhir Mata Kuliah Automata dan Teknik Kompilasi**
+Versi Python dari CSV_QL untuk query file CSV dengan syntax SQL sederhana.
 
-Program mini query engine yang mengimplementasikan konsep:
-- Lexical Analysis (DFA-based Lexer)
-- Syntax Analysis (Recursive Descent Parser)
-- Abstract Syntax Tree (AST)
-- Semantic Analysis
-- Intermediate Representation (IR/Query Plan)
-- Interpreter/Execution Engine
-
----
-
-## 🏗️ Arsitektur Sistem
+## 📁 Struktur Proyek
 
 ```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   INPUT     │    │   LEXER     │    │   PARSER    │
-│   Query     │───►│   (DFA)     │───►│   (CFG)     │
-│   String    │    │   Tokens    │    │   AST       │
-└─────────────┘    └─────────────┘    └─────────────┘
-                                            │
-                   ┌─────────────┐          ▼
-                   │  EXECUTOR   │    ┌─────────────┐
-                   │  (Engine)   │◄───│  SEMANTIC   │
-                   │  Results    │    │  ANALYZER   │
-                   └─────────────┘    └─────────────┘
-                         ▲                  │
-                         │            ┌─────────────┐
-                         └────────────│     IR      │
-                                      │ Query Plan  │
-                                      └─────────────┘
+csv_ql/
+├── README.md          📖 Dokumentasi & instruksi
+├── TEST_CASES.md      📋 Test cases untuk pengujian
+├── data.csv           📄 File CSV contoh untuk testing
+├── .gitignore         🚫 Git ignore
+│
+└── src/               📂 Source code
+    ├── main.py        ✅ [SELESAI] Entry point & REPL
+    ├── tokens.py      ✅ [SELESAI] Definisi token
+    ├── lexer.py       ✅ [SELESAI] Lexical analyzer
+    ├── ast_nodes.py   📝 [TODO] Abstract Syntax Tree
+    ├── parser.py      📝 [TODO] Syntax analyzer
+    ├── semantic.py    📝 [TODO] Semantic analyzer
+    ├── ir.py          📝 [TODO] Intermediate representation
+    ├── engine.py      📝 [TODO] Query execution
+    └── dfa.py         📝 [TODO] DFA visualization (opsional)
 ```
 
----
+> ⚠️ **CATATAN**: 
+> - File token dinamakan `tokens.py` (bukan `token.py`) untuk menghindari konflik dengan module bawaan Python
+> - File AST dinamakan `ast_nodes.py` (bukan `ast.py`) untuk alasan yang sama
 
-## 📜 CONTEXT-FREE GRAMMAR (CFG)
+## 🎯 Pembagian Tugas Kelompok
 
-### Notasi BNF
+### ✅ Sudah Dikerjakan
+- **tokens.py** - Definisi TokenType dan Token
+- **lexer.py** - Lexer untuk tokenization
+- **main.py** - Program utama dan REPL
 
-```bnf
-<query>       ::= SELECT <columns> FROM <table> <where_opt> <limit_opt>
+### 📋 Tugas untuk Anggota Kelompok
 
-<columns>     ::= "*" | <column_list>
-<column_list> ::= <identifier> | <identifier> "," <column_list>
+| File | Deskripsi | Tingkat Kesulitan | Dependensi |
+|------|-----------|-------------------|------------|
+| `ast_nodes.py` | Definisi AST (Statement, Expr, Op) | ⭐⭐ Mudah | Tidak ada |
+| `parser.py` | Parser token → AST | ⭐⭐⭐⭐ Sulit | `tokens.py`, `ast_nodes.py` |
+| `semantic.py` | Validasi query | ⭐⭐⭐ Sedang | `ast_nodes.py` |
+| `ir.py` | Query plan | ⭐⭐ Mudah | `ast_nodes.py` |
+| `engine.py` | Eksekusi query CSV | ⭐⭐⭐ Sedang | `ast_nodes.py` |
+| `dfa.py` | Visualisasi DFA | ⭐ Sangat Mudah | Tidak ada |
 
-<table>       ::= <identifier>
+### 🔄 Urutan Pengerjaan yang Disarankan
 
-<where_opt>   ::= ε | WHERE <expression>
-<limit_opt>   ::= ε | LIMIT <number>
-
-<expression>  ::= <or_expr>
-<or_expr>     ::= <and_expr> | <and_expr> OR <or_expr>
-<and_expr>    ::= <comparison> | <comparison> AND <and_expr>
-
-<comparison>  ::= <leaf> <comp_op> <leaf>
-<comp_op>     ::= "=" | "!=" | ">" | "<" | ">=" | "<="
-
-<leaf>        ::= <identifier> | <number> | <string_literal>
-
-<identifier>  ::= [a-zA-Z_][a-zA-Z0-9_.]*
-<number>      ::= [0-9]+(\.[0-9]+)?
-<string_literal> ::= '"' [^"]* '"' | "'" [^']* "'"
-```
-
-### Diagram Syntax (Railroad)
-
-```
-SELECT ──► columns ──► FROM ──► table ──┬──► WHERE ──► expr ──┬──► LIMIT ──► num ──►
-                                        │                     │
-                                        └─────────────────────┴────────────────────►
-```
-
----
-
-## 🔄 DFA DIAGRAM (Lexer)
-
-```
-                    ┌─────────────────────────────────────────────────────────────┐
-                    │                      DFA LEXER                              │
-                    ├─────────────────────────────────────────────────────────────┤
-                    │                                                             │
-                    │          ┌─────────┐                                        │
-                    │    ┌────►│q1:Ident │────► [KEYWORD/IDENTIFIER]              │
-                    │    │a-z  └────┬────┘                                        │
-                    │    │          │a-z,0-9,_                                    │
-                    │    │          ▼──────┘                                      │
-                    │  ┌─┴──┐                                                     │
-                    │  │ q0 │   ┌─────────┐                                       │
-                    │  │Start──►│q2:Number│────► [NUMBER]                         │
-                    │  └─┬──┘0-9└────┬────┘                                       │
-                    │    │          │0-9,.                                        │
-                    │    │          ▼──────┘                                      │
-                    │    │                                                        │
-                    │    │"    ┌─────────┐                                        │
-                    │    └────►│q3:String│────► [STRING_LITERAL]                  │
-                    │          └────┬────┘                                        │
-                    │    │          │ [^"]                                        │
-                    │    │          ▼──────┘                                      │
-                    │    │=><                                                     │
-                    │    └────►[q4:Operator]──► [OPERATOR]                        │
-                    │                                                             │
-                    └─────────────────────────────────────────────────────────────┘
-
-State Transitions:
-- q0 (Start)    : State awal
-- q1 (Ident)    : Membaca identifier/keyword (a-z, A-Z, _, 0-9)
-- q2 (Number)   : Membaca angka (0-9, .)
-- q3 (String)   : Membaca string literal (antara " atau ')
-- q4 (Operator) : Membaca operator (=, !=, >, <, >=, <=)
-```
-
----
-
-## 🎯 TOKEN DEFINITION
-
-| Token Type      | Regular Expression       | Contoh           |
-|-----------------|--------------------------|------------------|
-| SELECT          | `SELECT\|select`         | SELECT           |
-| FROM            | `FROM\|from`             | FROM             |
-| WHERE           | `WHERE\|where`           | WHERE            |
-| LIMIT           | `LIMIT\|limit`           | LIMIT            |
-| AND             | `AND\|and`               | AND              |
-| OR              | `OR\|or`                 | OR               |
-| IDENTIFIER      | `[a-zA-Z_][a-zA-Z0-9_.]*`| nama, data.csv   |
-| NUMBER          | `[0-9]+(\.[0-9]+)?`      | 25, 3.14         |
-| STRING_LITERAL  | `"[^"]*"\|'[^']*'`       | "Jakarta"        |
-| STAR            | `\*`                     | *                |
-| EQUAL           | `=`                      | =                |
-| NOT_EQUAL       | `!=`                     | !=               |
-| GREATER         | `>`                      | >                |
-| LESS            | `<`                      | <                |
-| GREATER_EQ      | `>=`                     | >=               |
-| LESS_EQ         | `<=`                     | <=               |
-| COMMA           | `,`                      | ,                |
-
----
-
-## 🌳 ABSTRACT SYNTAX TREE (AST)
-
-### Struktur AST
-
-```rust
-// Statement (Root Node)
-Statement::Select {
-    columns: Vec<String>,      // Kolom yang dipilih
-    table: String,             // Nama file CSV
-    where_clause: Option<Expr>,// Kondisi filter (opsional)
-    limit: Option<usize>,      // Batas hasil (opsional)
-}
-
-// Expression Node (untuk WHERE clause)
-Expr::BinaryOp {
-    left: Box<Expr>,           // Operand kiri
-    op: Op,                    // Operator
-    right: Box<Expr>,          // Operand kanan
-}
-Expr::Identifier(String)       // Nama kolom
-Expr::Number(f64)              // Nilai numerik
-Expr::StringLiteral(String)    // Nilai string
-```
-
-### Contoh AST
-
-Query: `SELECT nama, umur FROM data.csv WHERE umur > 20 AND kota = "Jakarta" LIMIT 5`
-
-```
-                    Select
-                    /    \
-            columns       table: "data.csv"
-           /      \              |
-       "nama"   "umur"      where_clause
-                                 |
-                              BinaryOp (AND)
-                             /            \
-                    BinaryOp (>)      BinaryOp (=)
-                    /       \         /        \
-              Ident       Number   Ident    StringLit
-              "umur"       20      "kota"   "Jakarta"
-```
-
----
-
-## 📊 INTERMEDIATE REPRESENTATION (IR)
-
-Query Plan yang dihasilkan sebelum eksekusi:
-
-```
-Query: SELECT nama FROM data.csv WHERE umur > 20 LIMIT 5
-
-📋 QUERY PLAN (IR):
-┌─────────────────────────────────────────────────┐
-│  1. 📂 SCAN: data.csv                           │  ← Baca file
-│       ↓                                         │
-│  2. 🔍 FILTER: umur > 20                        │  ← Filter WHERE
-│       ↓                                         │
-│  3. 📊 PROJECT: nama                            │  ← Pilih kolom
-│       ↓                                         │
-│  4. ✂️ LIMIT: 5                                 │  ← Batasi hasil
-└─────────────────────────────────────────────────┘
-```
-
----
+1. **ast_nodes.py** (harus dikerjakan pertama!)
+2. **parser.py** (butuh ast_nodes.py)
+3. **semantic.py** dan **ir.py** (bisa paralel, butuh ast_nodes.py)
+4. **engine.py** (butuh ast_nodes.py)
+5. **dfa.py** (opsional, bisa kapan saja)
 
 ## 🚀 Cara Menjalankan
 
 ```bash
-# Build
-cargo build --release
+# Masuk ke folder src
+cd src
 
-# Mode Interaktif (REPL)
-cargo run
+# Test lexer saja
+python lexer.py
 
-# Direct Query
-cargo run -- "SELECT * FROM data.csv"
-
-# Dengan Detail Kompilasi (verbose)
-cargo run -- "SELECT * FROM data.csv" --verbose
+# Jalankan program (setelah semua modul selesai)
+python main.py                              # Mode REPL
+python main.py "SELECT * FROM ../data.csv"  # Mode direct
+python main.py "SELECT * FROM ../data.csv" -v  # Dengan verbose
 ```
 
----
+## 📝 Cara Mengerjakan
 
-## 📝 CONTOH QUERY
+1. Buka file yang menjadi tugas Anda di folder `src/`
+2. Baca instruksi di bagian atas file (dalam docstring)
+3. Lihat kode TODO yang perlu diisi
+4. Uncomment import yang diperlukan setelah dependensi selesai
+5. Test dengan menjalankan file secara standalone
 
-### 1. Ambil Semua Data
+## 🧪 Contoh Query untuk Testing
+
 ```sql
-SELECT * FROM data.csv
+SELECT * FROM ../data.csv
+SELECT nama, umur FROM ../data.csv
+SELECT * FROM ../data.csv WHERE umur > 20
+SELECT * FROM ../data.csv WHERE kota = "Jakarta"
+SELECT * FROM ../data.csv WHERE umur > 20 AND umur < 30
+SELECT * FROM ../data.csv LIMIT 5
 ```
 
-### 2. Pilih Kolom Tertentu
-```sql
-SELECT nama, umur FROM data.csv
-```
+## ⚠️ Catatan Penting
 
-### 3. Filter dengan WHERE
-```sql
-SELECT * FROM data.csv WHERE umur > 20
-SELECT * FROM data.csv WHERE kota = "Jakarta"
-```
-
-### 4. Kombinasi AND/OR
-```sql
-SELECT * FROM data.csv WHERE umur > 20 AND umur < 30
-SELECT * FROM data.csv WHERE kota = "Jakarta" OR kota = "Bandung"
-```
-
-### 5. Dengan LIMIT
-```sql
-SELECT * FROM data.csv LIMIT 5
-SELECT nama FROM data.csv WHERE umur > 25 LIMIT 10
-```
-
----
-
-## 🔧 Perintah REPL
-
-| Perintah    | Fungsi                           |
-|-------------|----------------------------------|
-| `help`      | Tampilkan bantuan                |
-| `clear`     | Bersihkan layar                  |
-| `dfa`       | Tampilkan diagram DFA            |
-| `exit`      | Keluar program                   |
-| `--verbose` | Tambahkan di akhir query untuk detail |
-
----
-
-## 📁 Struktur Project
-
-```
-csv_ql/
-├── Cargo.toml          # Konfigurasi project
-├── README.md           # Dokumentasi
-├── data.csv            # Contoh data
-└── src/
-    ├── main.rs         # Entry point + REPL
-    ├── token.rs        # Definisi Token
-    ├── lexer.rs        # Lexical Analyzer (DFA)
-    ├── ast.rs          # Abstract Syntax Tree
-    ├── parser.rs       # Syntax Analyzer (CFG)
-    ├── semantic.rs     # Semantic Analyzer
-    ├── ir.rs           # Intermediate Representation
-    ├── dfa.rs          # DFA Visualization
-    └── engine.rs       # Query Executor
-```
-
----
-
-## ✅ Komponen yang Diimplementasi
-
-| Komponen                | File         | Status |
-|-------------------------|--------------|--------|
-| Token & Regex           | token.rs     | ✅     |
-| Lexer (DFA-based)       | lexer.rs     | ✅     |
-| Parser (Recursive Desc) | parser.rs    | ✅     |
-| AST                     | ast.rs       | ✅     |
-| Semantic Analyzer       | semantic.rs  | ✅     |
-| IR / Query Plan         | ir.rs        | ✅     |
-| DFA Visualization       | dfa.rs       | ✅     |
-| Interpreter/Executor    | engine.rs    | ✅     |
+- Semua file sudah memiliki skeleton code dan instruksi
+- Jangan ubah signature function yang sudah ada
+- Pastikan return type sesuai dengan yang diharapkan
+- Test file Anda secara individual sebelum integrasi
+- File `data.csv` ada di root project (gunakan `../data.csv` dari folder src)
