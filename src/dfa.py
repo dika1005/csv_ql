@@ -97,14 +97,12 @@ class DFATracker:
             input_char: Karakter input yang menyebabkan transisi
             to_state: State tujuan
         """
-        # TODO: Implementasi
-        # self.transitions.append(DFATransition(
-        #     from_state=self.current_state,
-        #     input_char="ws" if input_char.isspace() else input_char,
-        #     to_state=to_state
-        # ))
-        # self.current_state = to_state
-        pass
+        self.transitions.append(DFATransition(
+            from_state=self.current_state,
+            input_char="ws" if input_char.isspace() else input_char,
+            to_state=to_state
+        ))
+        self.current_state = to_state
     
     def reset(self) -> None:
         """Reset ke state awal."""

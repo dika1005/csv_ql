@@ -59,17 +59,78 @@ from dataclasses import dataclass
 from typing import Optional, Union, List
 
 
-# TODO: Implementasi Op enum di sini
-# class Op(Enum):
-#     ...
+# ═══════════════════════════════════════════════════════════════════════════════
+#                              Op Enum
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class Op(Enum):
+    """Enum untuk operator perbandingan dan logika"""
+    EQUAL = auto()              # =
+    NOT_EQUAL = auto()          # != atau <>
+    GREATER_THAN = auto()       # >
+    LESS_THAN = auto()          # <
+    GREATER_THAN_OR_EQ = auto() # >=
+    LESS_THAN_OR_EQ = auto()    # <=
+    OR = auto()                 # OR
+    AND = auto()                # AND
 
 
-# TODO: Implementasi Expr class/dataclass di sini
-# Hint: Bisa menggunakan Union type atau class inheritance
+# ═══════════════════════════════════════════════════════════════════════════════
+#                              Expr Classes
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@dataclass
+class BinaryOp:
+    """Operasi biner: left op right"""
+    left: 'Expr'
+    op: Op
+    right: 'Expr'
 
 
-# TODO: Implementasi Statement class/dataclass di sini
-# Hint: Untuk saat ini, cukup SelectStatement saja
+@dataclass
+class Literal:
+    """Literal string (tanpa tanda kutip)"""
+    value: str
 
 
-pass  # Hapus ini setelah implementasi selesai
+@dataclass
+class StringLiteral:
+    """String dalam tanda kutip"""
+    value: str
+
+
+@dataclass
+class Number:
+    """Angka (float)"""
+    value: float
+
+
+@dataclass
+class Identifier:
+    """Nama kolom/identifier"""
+    name: str
+
+
+# Union type untuk semua jenis Expr
+Expr = Union[BinaryOp, Literal, StringLiteral, Number, Identifier]
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#                              Statement Classes
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@dataclass
+class SelectStatement:
+    """
+    Representasi SELECT statement
+    
+    Contoh: SELECT nama, nilai FROM data.csv WHERE nilai > 80 LIMIT 10
+    """
+    columns: List[str]              # daftar kolom yang di-SELECT
+    table: str                      # nama file CSV
+    where_clause: Optional[Expr] = None  # kondisi WHERE (opsional)
+    limit: Optional[int] = None     # batasan jumlah baris (opsional)
+
+
+# Statement adalah alias untuk SelectStatement (untuk saat ini)
+Statement = SelectStatement
