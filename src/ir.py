@@ -54,7 +54,7 @@ TIPS:
 from enum import Enum, auto
 from dataclasses import dataclass
 from typing import List, Union
-# from ast_nodes import Statement, Expr, Op  # Uncomment setelah ast_nodes.py selesai
+from ast_nodes import Statement, Expr, Op, BinaryOp, Identifier, Number, StringLiteral
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -99,7 +99,7 @@ class QueryPlan:
 # FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def ast_to_ir(ast) -> QueryPlan:  # ast: Statement
+def ast_to_ir(ast: Statement) -> QueryPlan:
     """
     Konversi AST ke Query Plan (IR).
     
@@ -109,27 +109,23 @@ def ast_to_ir(ast) -> QueryPlan:  # ast: Statement
     Returns:
         QueryPlan dengan urutan langkah eksekusi
     """
-    steps = []
+    steps: List[PlanStep] = []
     
-    # TODO: Implementasi
-    #
-    # 1. SCAN - selalu ada
-    # steps.append(ScanStep(table=ast.table))
-    #
-    # 2. FILTER - jika ada WHERE
-    # if ast.where_clause:
-    #     steps.append(FilterStep(condition=expr_to_string(ast.where_clause)))
-    #
-    # 3. PROJECT - pilih kolom
-    # steps.append(ProjectStep(columns=ast.columns))
-    #
-    # 4. LIMIT - jika ada
-    # if ast.limit:
-    #     steps.append(LimitStep(count=ast.limit))
-    #
-    # return QueryPlan(steps=steps)
+    # 1. SCAN - selalu ada (langkah pertama: baca file CSV)
+    steps.append(ScanStep(table=ast.table))
     
-    return QueryPlan(steps=[])  # Hapus setelah implementasi
+    # 2. FILTER - jika ada WHERE clause (filter sebelum project untuk efisiensi)
+    if ast.where_clause is not None:
+        steps.append(FilterStep(condition=expr_to_string(ast.where_clause)))
+    
+    # 3. PROJECT - pilih kolom yang diminta
+    steps.append(ProjectStep(columns=ast.columns))
+    
+    # 4. LIMIT - jika ada batasan jumlah hasil
+    if ast.limit is not None:
+        steps.append(LimitStep(count=ast.limit))
+    
+    return QueryPlan(steps=steps)
 
 
 def print_query_plan(plan: QueryPlan) -> None:
@@ -142,30 +138,31 @@ def print_query_plan(plan: QueryPlan) -> None:
     print("\n  📋 QUERY PLAN (IR):")
     print("  ┌─────────────────────────────────────────────────┐")
     
-    # TODO: Implementasi
-    #
-    # for i, step in enumerate(plan.steps):
-    #     if isinstance(step, ScanStep):
-    #         icon, desc = "📂", f"SCAN: {step.table}"
-    #     elif isinstance(step, FilterStep):
-    #         icon, desc = "🔍", f"FILTER: {step.condition}"
-    #     elif isinstance(step, ProjectStep):
-    #         icon, desc = "📊", f"PROJECT: {', '.join(step.columns)}"
-    #     elif isinstance(step, LimitStep):
-    #         icon, desc = "✂️", f"LIMIT: {step.count}"
-    #     
-    #     # Print step dengan padding
-    #     padding = " " * max(0, 44 - len(desc))
-    #     print(f"  │  {i + 1}. {icon} {desc}{padding}│")
-    #     
-    #     # Arrow untuk step berikutnya
-    #     if i < len(plan.steps) - 1:
-    #         print("  │       ↓                                        │")
+    for i, step in enumerate(plan.steps):
+        # Tentukan icon dan deskripsi berdasarkan tipe step
+        if isinstance(step, ScanStep):
+            icon, desc = "📂", f"SCAN: {step.table}"
+        elif isinstance(step, FilterStep):
+            icon, desc = "🔍", f"FILTER: {step.condition}"
+        elif isinstance(step, ProjectStep):
+            icon, desc = "📊", f"PROJECT: {', '.join(step.columns)}"
+        elif isinstance(step, LimitStep):
+            icon, desc = "✂️", f"LIMIT: {step.count}"
+        else:
+            icon, desc = "❓", "UNKNOWN"
+        
+        # Print step dengan padding agar rapi
+        padding = " " * max(0, 44 - len(desc))
+        print(f"  │  {i + 1}. {icon} {desc}{padding}│")
+        
+        # Arrow untuk step berikutnya (kecuali step terakhir)
+        if i < len(plan.steps) - 1:
+            print("  │       ↓                                        │")
     
     print("  └─────────────────────────────────────────────────┘")
 
 
-def expr_to_string(expr) -> str:  # expr: Expr
+def expr_to_string(expr: Expr) -> str:
     """
     Konversi Expr ke string untuk tampilan.
     
@@ -175,28 +172,95 @@ def expr_to_string(expr) -> str:  # expr: Expr
     Returns:
         String representasi dari expression
     """
-    # TODO: Implementasi
-    #
-    # if isinstance(expr, Number):
-    #     return str(expr.value)
-    # elif isinstance(expr, Identifier):
-    #     return expr.name
-    # elif isinstance(expr, StringLiteral):
-    #     return f'"{expr.value}"'
-    # elif isinstance(expr, BinaryOp):
-    #     op_map = {
-    #         Op.EQUAL: "=",
-    #         Op.NOT_EQUAL: "!=",
-    #         Op.GREATER_THAN: ">",
-    #         Op.LESS_THAN: "<",
-    #         Op.GREATER_THAN_OR_EQ: ">=",
-    #         Op.LESS_THAN_OR_EQ: "<=",
-    #         Op.AND: "AND",
-    #         Op.OR: "OR",
-    #     }
-    #     left_str = expr_to_string(expr.left)
-    #     right_str = expr_to_string(expr.right)
-    #     op_str = op_map.get(expr.op, "?")
-    #     return f"{left_str} {op_str} {right_str}"
+    # Mapping operator ke simbol string
+    op_map = {
+        Op.EQUAL: "=",
+        Op.NOT_EQUAL: "!=",
+        Op.GREATER_THAN: ">",
+        Op.LESS_THAN: "<",
+        Op.GREATER_THAN_OR_EQ: ">=",
+        Op.LESS_THAN_OR_EQ: "<=",
+        Op.AND: "AND",
+        Op.OR: "OR",
+    }
     
-    return ""  # Hapus setelah implementasi
+    # Handle berdasarkan tipe expression
+    if isinstance(expr, Number):
+        # Angka: tampilkan sebagai string
+        # Jika bilangan bulat, hilangkan .0
+        if expr.value == int(expr.value):
+            return str(int(expr.value))
+        return str(expr.value)
+    
+    elif isinstance(expr, Identifier):
+        # Identifier: tampilkan nama kolom
+        return expr.name
+    
+    elif isinstance(expr, StringLiteral):
+        # String literal: tampilkan dengan tanda kutip
+        return f'"{expr.value}"'
+    
+    elif isinstance(expr, BinaryOp):
+        # Binary operation: rekursif ke kiri dan kanan
+        left_str = expr_to_string(expr.left)
+        right_str = expr_to_string(expr.right)
+        op_str = op_map.get(expr.op, "?")
+        
+        # Tambah kurung untuk AND/OR agar jelas precedence
+        if expr.op in (Op.AND, Op.OR):
+            return f"({left_str} {op_str} {right_str})"
+        return f"{left_str} {op_str} {right_str}"
+    
+    return ""  # Fallback untuk tipe yang tidak dikenal
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CONTOH PENGGUNAAN (untuk testing)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+if __name__ == "__main__":
+    from lexer import Lexer
+    from parser import Parser
+    
+    # Test cases
+    queries = [
+        "SELECT * FROM data.csv",
+        "SELECT nama, nilai FROM data.csv",
+        'SELECT nama FROM data.csv WHERE status = "Lulus"',
+        "SELECT * FROM data.csv WHERE nilai > 80",
+        "SELECT * FROM data.csv WHERE nilai >= 3.0 AND semester = 5",
+        'SELECT * FROM data.csv WHERE status = "Lulus" OR nilai_huruf = "A"',
+        "SELECT nama, nilai FROM data.csv LIMIT 5",
+        'SELECT * FROM data.csv WHERE status = "Tidak Lulus" LIMIT 10',
+    ]
+    
+    print("=" * 70)
+    print("                    IR (QUERY PLAN) TEST")
+    print("=" * 70)
+    
+    for query in queries:
+        print(f"\nQuery: {query}")
+        print("-" * 55)
+        
+        try:
+            # Tokenize
+            lexer = Lexer(query)
+            tokens = lexer.tokenize()
+            
+            # Parse
+            parser = Parser(tokens)
+            ast = parser.parse()
+            
+            # Convert to IR
+            ir = ast_to_ir(ast)
+            
+            # Print Query Plan
+            print_query_plan(ir)
+            print("  ✅ Konversi ke IR berhasil!")
+            
+        except Exception as e:
+            print(f"  ❌ Error: {e}")
+    
+    print("\n" + "=" * 70)
+    print("                    TEST SELESAI")
+    print("=" * 70)
