@@ -9,11 +9,10 @@ Mendukung dua mode:
 
 import sys
 from lexer import Lexer
-# TODO: Uncomment import berikut setelah modul-modul tersebut selesai diimplementasikan
-# from parser import Parser
-# from semantic import analyze
-# from ir import ast_to_ir, print_query_plan
-# from engine import execute_query
+from parser import Parser
+from semantic import analyze
+from ir import ast_to_ir, print_query_plan
+from engine import execute_query
 from dfa import DFATracker
 
 
