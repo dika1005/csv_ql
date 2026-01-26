@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Script untuk generate MAKALAH_CSV_QL.docx
+Script untuk generate MAKALAH_CSV_QL.docx (Max 10 halaman)
+Sesuai format ketentuan Project Akhir Automata dan Teknik Kompilasi
+Dengan penjelasan pengertian agar mudah dipahami
 """
 
 from docx import Document
@@ -54,15 +56,25 @@ def add_table(doc, headers, rows):
 def create_document():
     doc = Document()
     
-    # ==================== HALAMAN JUDUL ====================
+    # Set margins untuk hemat ruang
+    for section in doc.sections:
+        section.top_margin = Cm(2)
+        section.bottom_margin = Cm(2)
+        section.left_margin = Cm(2.5)
+        section.right_margin = Cm(2.5)
+    
+    # ==================== HALAMAN 1: JUDUL ====================
+    doc.add_paragraph()
+    doc.add_paragraph()
+    
     title = doc.add_heading('', 0)
-    title_run = title.add_run('MAKALAH PROYEK AKHIR')
+    title_run = title.add_run('DOKUMEN DESAIN')
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     
     subtitle = doc.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    subtitle.add_run('MATA KULIAH\n').bold = True
-    subtitle.add_run('AUTOMATA DAN TEKNIK KOMPILASI').bold = True
+    subtitle.add_run('PROJECT AKHIR\n').bold = True
+    subtitle.add_run('MATA KULIAH AUTOMATA DAN TEKNIK KOMPILASI').bold = True
     
     doc.add_paragraph()
     doc.add_paragraph()
@@ -72,8 +84,9 @@ def create_document():
     
     tema = doc.add_paragraph()
     tema.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    tema.add_run('Tema Project: Big Data - Mini Query Engine berbasis SQL').italic = True
+    tema.add_run('Tema: Big Data - Mini Query Engine berbasis SQL').italic = True
     
+    doc.add_paragraph()
     doc.add_paragraph()
     doc.add_paragraph()
     doc.add_paragraph()
@@ -86,173 +99,114 @@ def create_document():
     
     doc.add_page_break()
     
-    # ==================== DAFTAR ISI ====================
+    # ==================== HALAMAN 2: DAFTAR ISI ====================
     add_heading(doc, 'DAFTAR ISI', 1)
     
     toc_items = [
-        ('BAB I', 'Pendahuluan', '1'),
-        ('BAB II', 'Deskripsi Tema dan Studi Kasus', '3'),
-        ('BAB III', 'Analisis Leksikal (Lexer)', '5'),
-        ('BAB IV', 'Analisis Sintaksis (Parser)', '8'),
-        ('BAB V', 'Analisis Semantik', '11'),
-        ('BAB VI', 'Intermediate Representation (IR)', '13'),
-        ('BAB VII', 'Execution Engine', '15'),
-        ('BAB VIII', 'Simulasi Automata (DFA)', '17'),
-        ('BAB IX', 'Pengujian dan Hasil', '19'),
-        ('BAB X', 'Kesimpulan', '22'),
-        ('', 'Daftar Pustaka', '23'),
-        ('', 'Lampiran', '24'),
+        ('1.', 'Deskripsi Tema dan Studi Kasus', '3'),
+        ('2.', 'Daftar Token dan Regular Expression', '4'),
+        ('3.', 'Sketsa NFA/DFA', '5'),
+        ('4.', 'Context-Free Grammar (CFG)', '6'),
+        ('5.', 'Desain Parser dan Sketsa AST', '7'),
+        ('6.', 'Desain IR dan Alur Eksekusi', '8'),
+        ('7.', 'Simulasi Automata (DFA) dan Contoh Input-Output', '9'),
+        ('', 'Daftar Pustaka', '10'),
     ]
     
-    for bab, title, page in toc_items:
+    for num, title, page in toc_items:
         p = doc.add_paragraph()
-        if bab:
-            p.add_run(f'{bab} - ').bold = True
+        if num:
+            p.add_run(f'{num} ').bold = True
         p.add_run(f'{title}')
-        p.add_run(f'\t\t{page}')
+        p.add_run(f' {"." * 50} {page}')
     
     doc.add_page_break()
     
-    # ==================== BAB I PENDAHULUAN ====================
-    add_heading(doc, 'BAB I - PENDAHULUAN', 1)
+    # ==================== HALAMAN 3: DESKRIPSI TEMA DAN STUDI KASUS ====================
+    add_heading(doc, '1. Deskripsi Tema dan Studi Kasus', 1)
     
-    add_heading(doc, '1.1 Latar Belakang', 2)
-    doc.add_paragraph(
-        'Dalam era digital saat ini, data menjadi aset yang sangat penting dalam berbagai bidang, '
-        'termasuk pendidikan. Sistem Informasi Akademik (SIMAK/SIAKAD) menghasilkan data dalam jumlah besar, '
-        'termasuk data nilai mahasiswa yang umumnya disimpan dalam format CSV (Comma-Separated Values).'
-    )
-    doc.add_paragraph(
-        'Untuk menganalisis data tersebut, pengguna biasanya memerlukan pengetahuan tentang bahasa pemrograman '
-        'atau tools khusus. Hal ini menimbulkan hambatan bagi pengguna non-teknis yang ingin melakukan query '
-        'sederhana terhadap data.'
-    )
-    doc.add_paragraph(
-        'CSV_QL hadir sebagai solusi berupa Domain Specific Language (DSL) yang memungkinkan pengguna melakukan '
-        'query terhadap file CSV menggunakan sintaks mirip SQL yang lebih familiar dan mudah dipahami.'
-    )
-    
-    add_heading(doc, '1.2 Rumusan Masalah', 2)
-    problems = [
-        'Bagaimana membangun lexical analyzer berbasis DFA untuk tokenisasi query SQL?',
-        'Bagaimana merancang parser menggunakan CFG dengan metode recursive descent?',
-        'Bagaimana mengimplementasikan analisis semantik untuk validasi query?',
-        'Bagaimana merancang Intermediate Representation (IR) untuk eksekusi query?',
-        'Bagaimana mengimplementasikan query engine yang dapat mengeksekusi query terhadap file CSV?',
-    ]
-    for i, problem in enumerate(problems, 1):
-        doc.add_paragraph(f'{i}. {problem}')
-    
-    add_heading(doc, '1.3 Tujuan', 2)
-    objectives = [
-        'Mengimplementasikan lexical analyzer berbasis DFA',
-        'Membangun parser dengan Context-Free Grammar (CFG)',
-        'Menyusun Abstract Syntax Tree (AST) dan analisis semantik',
-        'Membangun Intermediate Representation (IR) untuk query plan',
-        'Mengembangkan execution engine untuk menjalankan query',
-    ]
-    for i, obj in enumerate(objectives, 1):
-        doc.add_paragraph(f'{i}. {obj}')
-    
-    add_heading(doc, '1.4 Batasan Masalah', 2)
-    doc.add_paragraph('• Query terbatas pada operasi SELECT')
-    doc.add_paragraph('• Mendukung klausa WHERE dengan operator perbandingan dan logika')
-    doc.add_paragraph('• Mendukung klausa LIMIT')
-    doc.add_paragraph('• File input harus berformat CSV dengan header')
-    
-    doc.add_page_break()
-    
-    # ==================== BAB II DESKRIPSI TEMA ====================
-    add_heading(doc, 'BAB II - DESKRIPSI TEMA DAN STUDI KASUS', 1)
-    
-    add_heading(doc, '2.1 Tema Project', 2)
-    doc.add_paragraph(
-        'Proyek ini mengambil tema Big Data dengan fokus membangun Mini Query Engine untuk subset SQL.'
-    )
+    add_heading(doc, '1.1 Tema Project: Big Data - Mini Query Engine', 2)
     
     # Pengertian Big Data
-    add_heading(doc, 'Pengertian Big Data', 3)
-    doc.add_paragraph(
-        'Big Data adalah istilah yang menggambarkan volume data yang sangat besar, baik terstruktur maupun '
-        'tidak terstruktur. Big Data memiliki karakteristik 3V: Volume (ukuran data), Velocity (kecepatan data), '
-        'dan Variety (keragaman data). Dalam konteks proyek ini, kami fokus pada pemrosesan data terstruktur '
-        'dalam format CSV menggunakan bahasa query.'
-    )
+    p = doc.add_paragraph()
+    p.add_run('Pengertian Big Data: ').bold = True
+    p.add_run('Big Data adalah istilah yang menggambarkan volume data yang sangat besar, baik terstruktur maupun tidak terstruktur. Karakteristik Big Data dikenal dengan 3V: Volume (ukuran data besar), Velocity (kecepatan data masuk), dan Variety (keragaman tipe data).')
     
     # Pengertian Query Engine
-    add_heading(doc, 'Pengertian Query Engine', 3)
-    doc.add_paragraph(
-        'Query Engine adalah komponen software yang bertanggung jawab untuk memproses dan mengeksekusi query '
-        'terhadap data. Query engine menerima query dalam bentuk teks, mem-parsing query tersebut, '
-        'mengoptimasi rencana eksekusi, dan mengembalikan hasil. Contoh query engine populer adalah '
-        'MySQL, PostgreSQL, dan SQLite.'
-    )
+    p = doc.add_paragraph()
+    p.add_run('Pengertian Query Engine: ').bold = True
+    p.add_run('Query Engine adalah komponen perangkat lunak yang bertugas memproses dan mengeksekusi query (permintaan data) terhadap sumber data. Query engine menerima perintah dalam bentuk teks, menganalisis strukturnya, dan mengembalikan hasil yang sesuai.')
     
-    add_heading(doc, '2.2 Studi Kasus: Query Data Nilai Mahasiswa', 2)
+    # Pengertian DSL
+    p = doc.add_paragraph()
+    p.add_run('Pengertian DSL: ').bold = True
+    p.add_run('Domain Specific Language (DSL) adalah bahasa pemrograman yang dirancang khusus untuk domain tertentu. Berbeda dengan bahasa general-purpose seperti Python atau Java, DSL memiliki sintaks yang lebih sederhana dan fokus pada satu tugas spesifik.')
+    
     doc.add_paragraph(
-        'Dalam sistem akademik, data nilai mahasiswa sering disimpan dalam format CSV dengan struktur sebagai berikut:'
+        'CSV_QL adalah DSL yang kami kembangkan untuk melakukan query terhadap file CSV '
+        'menggunakan sintaks mirip SQL. Proyek ini mengimplementasikan komponen-komponen compiler:'
+    )
+    doc.add_paragraph('• Lexer - Memecah query menjadi token-token (tokenisasi)')
+    doc.add_paragraph('• Parser - Menganalisis struktur dan membangun AST')
+    doc.add_paragraph('• Semantic Analyzer - Memvalidasi kebenaran makna query')
+    doc.add_paragraph('• IR Generator - Membuat rencana eksekusi (Query Plan)')
+    doc.add_paragraph('• Execution Engine - Menjalankan query terhadap data CSV')
+    
+    add_heading(doc, '1.2 Studi Kasus: Query Data Nilai Mahasiswa SIAKAD', 2)
+    doc.add_paragraph(
+        'Studi kasus yang dipilih adalah sistem query untuk data nilai mahasiswa dari SIAKAD. '
+        'Data disimpan dalam format CSV dengan struktur kolom sebagai berikut:'
     )
     
     add_table(doc,
         ['Kolom', 'Tipe', 'Deskripsi'],
         [
             ['nim', 'String', 'Nomor Induk Mahasiswa'],
-            ['nama', 'String', 'Nama mahasiswa'],
-            ['mata_kuliah', 'String', 'Nama mata kuliah'],
-            ['sks', 'Number', 'Jumlah SKS'],
-            ['nilai_huruf', 'String', 'Nilai huruf (A, B, C, D, E)'],
-            ['nilai_angka', 'Number', 'Nilai angka (0.0 - 4.0)'],
-            ['semester', 'Number', 'Semester pengambilan'],
-            ['status', 'String', 'Status kelulusan'],
+            ['nama', 'String', 'Nama lengkap mahasiswa'],
+            ['mata_kuliah', 'String', 'Nama mata kuliah yang diambil'],
+            ['sks', 'Number', 'Jumlah Satuan Kredit Semester'],
+            ['nilai_huruf', 'String', 'Nilai dalam huruf (A, B, C, D, E)'],
+            ['nilai_angka', 'Number', 'Nilai dalam angka (0.0 - 4.0)'],
+            ['semester', 'Number', 'Semester pengambilan mata kuliah'],
+            ['status', 'String', 'Status kelulusan (Lulus/Tidak Lulus)'],
         ]
     )
     
     doc.add_paragraph()
-    add_heading(doc, '2.3 Contoh Query', 2)
-    add_code_block(doc, '''-- Lihat semua data nilai
+    add_heading(doc, '1.3 Contoh Query CSV_QL', 2)
+    doc.add_paragraph('Berikut adalah contoh-contoh query yang dapat dijalankan dengan CSV_QL:')
+    add_code_block(doc, '''-- Menampilkan semua data nilai
 SELECT * FROM data_nilai.csv
 
--- Filter mahasiswa dengan nilai A
+-- Mencari mahasiswa dengan nilai A
 SELECT nama, mata_kuliah FROM data_nilai.csv WHERE nilai_huruf = "A"
 
--- Kombinasi kondisi
+-- Kombinasi kondisi dengan operator AND
 SELECT * FROM data_nilai.csv WHERE nilai_angka >= 3.0 AND semester = 5
 
--- Batasi hasil
-SELECT nama, nilai_huruf FROM data_nilai.csv LIMIT 5''')
+-- Membatasi jumlah hasil dengan LIMIT
+SELECT nama FROM data_nilai.csv LIMIT 5''')
     
     doc.add_page_break()
     
-    # ==================== BAB III ANALISIS LEKSIKAL ====================
-    add_heading(doc, 'BAB III - ANALISIS LEKSIKAL (LEXER)', 1)
+    # ==================== HALAMAN 4: TOKEN DAN REGEX ====================
+    add_heading(doc, '2. Daftar Token dan Regular Expression', 1)
     
-    # Pengertian Lexer
-    add_heading(doc, 'Pengertian Lexical Analysis', 3)
-    doc.add_paragraph(
-        'Lexical Analysis (Analisis Leksikal) adalah tahap pertama dalam proses kompilasi yang bertugas '
-        'mengubah aliran karakter (source code) menjadi aliran token. Proses ini juga disebut tokenisasi '
-        'atau scanning. Komponen yang melakukan proses ini disebut Lexer atau Scanner.'
-    )
+    # Pengertian Token
+    p = doc.add_paragraph()
+    p.add_run('Pengertian Token: ').bold = True
+    p.add_run('Token adalah unit terkecil yang bermakna dalam sebuah bahasa pemrograman. Token merupakan hasil dari proses tokenisasi (lexical analysis). Setiap token memiliki tipe dan nilai. Contoh: kata "SELECT" adalah token dengan tipe KEYWORD.')
     
-    add_heading(doc, 'Pengertian Token', 3)
-    doc.add_paragraph(
-        'Token adalah unit terkecil yang bermakna dalam sebuah bahasa pemrograman. Token terdiri dari '
-        'pasangan (tipe_token, nilai). Contoh token: keyword (SELECT, FROM), identifier (nama_kolom), '
-        'operator (=, >), dan literal (angka, string).'
-    )
+    # Pengertian Regular Expression
+    p = doc.add_paragraph()
+    p.add_run('Pengertian Regular Expression: ').bold = True
+    p.add_run('Regular Expression (Regex) adalah notasi formal untuk mendeskripsikan pola string. Regex digunakan untuk mendefinisikan bagaimana suatu token dikenali. Misalnya, pola [0-9]+ berarti "satu atau lebih digit angka".')
     
-    add_heading(doc, '3.1 Daftar Token', 2)
-    doc.add_paragraph('Lexer CSV_QL mengenali token-token berikut:')
-    
+    add_heading(doc, '2.1 Daftar Token CSV_QL', 2)
     add_table(doc,
-        ['Kategori', 'Token', 'Simbol/Pattern'],
+        ['Kategori', 'Token', 'Pattern/Simbol'],
         [
-            ['Keywords', 'SELECT', 'SELECT'],
-            ['', 'FROM', 'FROM'],
-            ['', 'WHERE', 'WHERE'],
-            ['', 'LIMIT', 'LIMIT'],
-            ['', 'AND', 'AND'],
-            ['', 'OR', 'OR'],
+            ['Keywords', 'SELECT, FROM, WHERE, LIMIT, AND, OR', 'Kata kunci SQL'],
             ['Operators', 'EQUAL', '='],
             ['', 'NOT_EQUAL', '!= atau <>'],
             ['', 'GREATER_THAN', '>'],
@@ -260,483 +214,410 @@ SELECT nama, nilai_huruf FROM data_nilai.csv LIMIT 5''')
             ['', 'GREATER_THAN_OR_EQ', '>='],
             ['', 'LESS_THAN_OR_EQ', '<='],
             ['', 'STAR', '*'],
-            ['Literals', 'IDENTIFIER', '[a-zA-Z_][a-zA-Z0-9_.]*'],
-            ['', 'NUMBER', '[0-9]+(\\.[0-9]+)?'],
-            ['', 'STRING_LITERAL', '"[^"]*" atau \'[^\']*\''],
+            ['Literals', 'IDENTIFIER', 'Nama kolom/tabel'],
+            ['', 'NUMBER', 'Angka (bulat/desimal)'],
+            ['', 'STRING_LITERAL', 'Teks dalam tanda kutip'],
             ['Punctuation', 'COMMA', ','],
         ]
     )
     
     doc.add_paragraph()
-    add_heading(doc, '3.2 Regular Expression', 2)
-    
-    # Pengertian Regex
-    add_heading(doc, 'Pengertian Regular Expression', 3)
-    doc.add_paragraph(
-        'Regular Expression (Regex) adalah notasi formal untuk mendeskripsikan pola string. '
-        'Regex digunakan untuk mendefinisikan pola token dalam lexer. Regex dapat dikonversi '
-        'menjadi NFA (Non-deterministic Finite Automaton) dan kemudian ke DFA.'
-    )
-    
-    doc.add_paragraph('Berikut adalah regular expression untuk setiap kategori token:')
+    add_heading(doc, '2.2 Regular Expression untuk Setiap Token', 2)
+    doc.add_paragraph('Berikut adalah pola regex yang digunakan untuk mengenali setiap jenis token:')
     add_code_block(doc, '''KEYWORD     := SELECT | FROM | WHERE | LIMIT | AND | OR
-IDENTIFIER  := [a-zA-Z_][a-zA-Z0-9_.]*
-NUMBER      := [0-9]+(\\.[0-9]+)?
-STRING      := "[^"]*" | '[^']*'
+IDENTIFIER  := [a-zA-Z_][a-zA-Z0-9_.]*   (huruf/underscore, diikuti huruf/angka/titik)
+NUMBER      := [0-9]+(\\.[0-9]+)?         (angka bulat atau desimal)
+STRING      := "[^"]*" | '[^']*'         (teks dalam tanda kutip)
 OPERATOR    := = | != | <> | > | < | >= | <=
 SYMBOL      := * | ,
-WHITESPACE  := [ \\t\\n\\r]+''')
-    
-    add_heading(doc, '3.3 Diagram DFA Lexer', 2)
-    
-    # Pengertian DFA
-    add_heading(doc, 'Pengertian DFA (Deterministic Finite Automaton)', 3)
-    doc.add_paragraph(
-        'DFA adalah mesin abstrak yang terdiri dari himpunan state terbatas, alphabet input, fungsi transisi, '
-        'state awal, dan himpunan state akhir. DFA memproses input karakter per karakter dan berpindah dari '
-        'satu state ke state lain berdasarkan fungsi transisi. DFA digunakan dalam lexer untuk mengenali token.'
-    )
-    
-    doc.add_paragraph('Definisi formal DFA: M = (Q, Σ, δ, q0, F)')
-    doc.add_paragraph('• Q = {q0, q1, q2, q3, q4, qf} — Himpunan state')
-    doc.add_paragraph('• Σ = ASCII characters — Alphabet input')
-    doc.add_paragraph('• δ = Fungsi transisi')
-    doc.add_paragraph('• q0 = State awal')
-    doc.add_paragraph('• F = {qf} — State akhir')
+WHITESPACE  := [ \\t\\n\\r]+              (spasi, tab, newline - diabaikan)''')
     
     doc.add_paragraph()
-    doc.add_paragraph('Deskripsi State:')
-    doc.add_paragraph('• q0 (Start): State awal, menunggu input')
-    doc.add_paragraph('• q1 (InIdent): Membaca identifier/keyword')
-    doc.add_paragraph('• q2 (InNumber): Membaca angka')
-    doc.add_paragraph('• q3 (InString): Membaca string literal')
-    doc.add_paragraph('• q4 (InOper): Membaca operator')
-    doc.add_paragraph('• qf (Accept): State akhir')
-    
-    add_heading(doc, '3.4 Tabel Transisi DFA', 2)
-    add_table(doc,
-        ['State', 'Input', 'Next State', 'Action'],
-        [
-            ['q0', '[a-zA-Z_]', 'q1', 'Start identifier'],
-            ['q0', '[0-9]', 'q2', 'Start number'],
-            ['q0', '" atau \'', 'q3', 'Start string'],
-            ['q0', '=><!=', 'q4', 'Start operator'],
-            ['q0', '*,', 'qf', 'Emit symbol'],
-            ['q0', 'whitespace', 'q0', 'Skip'],
-            ['q1', '[a-zA-Z0-9_.]', 'q1', 'Continue identifier'],
-            ['q1', 'otherwise', 'qf', 'Emit IDENTIFIER/KEYWORD'],
-            ['q2', '[0-9.]', 'q2', 'Continue number'],
-            ['q2', 'otherwise', 'qf', 'Emit NUMBER'],
-            ['q3', '[^"\']', 'q3', 'Continue string'],
-            ['q3', '" atau \'', 'qf', 'Emit STRING_LITERAL'],
-        ]
-    )
-    
-    add_heading(doc, '3.5 Contoh Tokenisasi', 2)
-    doc.add_paragraph('Input Query:')
-    add_code_block(doc, 'SELECT nama, nilai_huruf FROM data_nilai.csv WHERE status = "Lulus"')
-    
-    doc.add_paragraph('Output Tokens:')
-    add_code_block(doc, '''Token(SELECT)
-Token(IDENTIFIER, "nama")
-Token(COMMA)
-Token(IDENTIFIER, "nilai_huruf")
-Token(FROM)
-Token(IDENTIFIER, "data_nilai.csv")
-Token(WHERE)
-Token(IDENTIFIER, "status")
-Token(EQUAL)
-Token(STRING_LITERAL, "Lulus")''')
+    add_heading(doc, '2.3 Contoh Proses Tokenisasi', 2)
+    doc.add_paragraph('Input query:')
+    add_code_block(doc, 'SELECT nama FROM data.csv WHERE status = "Lulus"')
+    doc.add_paragraph('Hasil tokenisasi:')
+    add_code_block(doc, '''Token 1: (KEYWORD, "SELECT")
+Token 2: (IDENTIFIER, "nama")
+Token 3: (KEYWORD, "FROM")
+Token 4: (IDENTIFIER, "data.csv")
+Token 5: (KEYWORD, "WHERE")
+Token 6: (IDENTIFIER, "status")
+Token 7: (OPERATOR, "=")
+Token 8: (STRING_LITERAL, "Lulus")''')
     
     doc.add_page_break()
     
-    # ==================== BAB IV ANALISIS SINTAKSIS ====================
-    add_heading(doc, 'BAB IV - ANALISIS SINTAKSIS (PARSER)', 1)
+    # ==================== HALAMAN 5: SKETSA NFA/DFA ====================
+    add_heading(doc, '3. Sketsa NFA/DFA', 1)
     
-    # Pengertian Parser
-    add_heading(doc, 'Pengertian Syntax Analysis', 3)
-    doc.add_paragraph(
-        'Syntax Analysis (Analisis Sintaksis) adalah tahap kedua dalam kompilasi yang bertugas memeriksa '
-        'struktur gramatikal dari aliran token dan membangun parse tree atau AST. Komponen yang melakukan '
-        'analisis sintaksis disebut Parser.'
+    # Pengertian DFA
+    p = doc.add_paragraph()
+    p.add_run('Pengertian DFA: ').bold = True
+    p.add_run('DFA (Deterministic Finite Automaton) adalah mesin abstrak yang terdiri dari himpunan state terbatas. DFA memproses input karakter per karakter dan berpindah dari satu state ke state lain berdasarkan fungsi transisi. DFA bersifat deterministik, artinya untuk setiap state dan input, hanya ada satu state tujuan yang mungkin.')
+    
+    # Pengertian NFA
+    p = doc.add_paragraph()
+    p.add_run('Pengertian NFA: ').bold = True
+    p.add_run('NFA (Non-deterministic Finite Automaton) mirip dengan DFA, tetapi dapat memiliki beberapa transisi untuk input yang sama atau transisi epsilon (tanpa input). NFA dapat dikonversi menjadi DFA yang ekuivalen.')
+    
+    add_heading(doc, '3.1 Definisi Formal DFA Lexer', 2)
+    doc.add_paragraph('DFA untuk lexer CSV_QL didefinisikan sebagai M = (Q, Σ, δ, q0, F):')
+    doc.add_paragraph('• Q = {q0, q1, q2, q3, q4, qf} — Himpunan state (6 state)')
+    doc.add_paragraph('• Σ = Karakter ASCII — Alphabet input')
+    doc.add_paragraph('• δ = Fungsi transisi (lihat tabel di bawah)')
+    doc.add_paragraph('• q0 = State awal (START)')
+    doc.add_paragraph('• F = {qf} — Himpunan state akhir (accepting state)')
+    
+    add_heading(doc, '3.2 Diagram DFA Lexer', 2)
+    doc.add_paragraph('Berikut adalah diagram transisi DFA untuk lexer CSV_QL:')
+    add_code_block(doc, '''
+       ┌─────────────────────────────────────────────────────────┐
+       │                    DFA LEXER CSV_QL                     │
+       ├─────────────────────────────────────────────────────────┤
+       │                                                         │
+       │      [a-zA-Z_]      ┌────────┐    whitespace/EOF        │
+       │     ┌──────────────►│   q1   │────────────────► EMIT    │
+       │     │               │ InIdent│    KEYWORD/IDENT         │
+       │     │               └───┬────┘                          │
+       │     │                   │ [a-zA-Z0-9_.]                 │
+       │     │                   └───────┘ (loop)                │
+       │   ┌─┴───┐                                               │
+       │   │ q0  │   [0-9]   ┌────────┐    whitespace/EOF        │
+       │   │START│──────────►│   q2   │────────────────► EMIT    │
+       │   └─┬───┘           │ InNum  │       NUMBER             │
+       │     │               └───┬────┘                          │
+       │     │                   │ [0-9.]                        │
+       │     │                   └───────┘ (loop)                │
+       │     │                                                   │
+       │     │   " atau '    ┌────────┐    " atau '              │
+       │     └──────────────►│   q3   │────────────────► EMIT    │
+       │     │               │ InStr  │    STRING_LITERAL        │
+       │     │               └───┬────┘                          │
+       │     │                   │ [karakter lain]               │
+       │     │                   └───────┘ (loop)                │
+       │     │                                                   │
+       │     │   = > < !     ┌────────┐                          │
+       │     └──────────────►│   q4   │────────────────► EMIT    │
+       │                     │ InOper │       OPERATOR           │
+       │                     └────────┘                          │
+       └─────────────────────────────────────────────────────────┘
+''')
+    
+    add_heading(doc, '3.3 Tabel Transisi DFA', 2)
+    add_table(doc,
+        ['State Asal', 'Input', 'State Tujuan', 'Aksi'],
+        [
+            ['q0 (Start)', 'Huruf a-z, A-Z, _', 'q1 (InIdent)', 'Mulai baca identifier'],
+            ['q0', 'Digit 0-9', 'q2 (InNumber)', 'Mulai baca angka'],
+            ['q0', 'Tanda kutip " atau \'', 'q3 (InString)', 'Mulai baca string'],
+            ['q0', 'Operator = > < !', 'q4 (InOper)', 'Mulai baca operator'],
+            ['q0', 'Simbol * atau ,', 'qf (Accept)', 'Emit token simbol'],
+            ['q0', 'Whitespace', 'q0', 'Skip (abaikan)'],
+            ['q1', 'Huruf/digit/titik', 'q1', 'Lanjut baca identifier'],
+            ['q1', 'Karakter lain', 'qf', 'Emit IDENTIFIER/KEYWORD'],
+            ['q2', 'Digit atau titik', 'q2', 'Lanjut baca angka'],
+            ['q2', 'Karakter lain', 'qf', 'Emit NUMBER'],
+            ['q3', 'Bukan tanda kutip', 'q3', 'Lanjut baca string'],
+            ['q3', 'Tanda kutip penutup', 'qf', 'Emit STRING_LITERAL'],
+        ]
     )
     
-    add_heading(doc, '4.1 Context-Free Grammar (CFG)', 2)
+    doc.add_page_break()
+    
+    # ==================== HALAMAN 6: CFG ====================
+    add_heading(doc, '4. Context-Free Grammar (CFG)', 1)
     
     # Pengertian CFG
-    add_heading(doc, 'Pengertian CFG', 3)
-    doc.add_paragraph(
-        'Context-Free Grammar (CFG) adalah notasi formal untuk mendefinisikan struktur sintaksis bahasa. '
-        'CFG terdiri dari terminal (token), non-terminal (variabel), production rules, dan start symbol. '
-        'CFG lebih ekspresif dari Regular Expression dan dapat mendeskripsikan struktur bersarang.'
-    )
+    p = doc.add_paragraph()
+    p.add_run('Pengertian CFG: ').bold = True
+    p.add_run('Context-Free Grammar (CFG) adalah notasi formal untuk mendefinisikan struktur sintaksis suatu bahasa. CFG terdiri dari: (1) Terminal - simbol dasar/token, (2) Non-terminal - variabel yang dapat diturunkan, (3) Production Rules - aturan penurunan, dan (4) Start Symbol - simbol awal penurunan.')
     
-    doc.add_paragraph('Grammar CSV_QL dalam Backus-Naur Form (BNF):')
-    add_code_block(doc, '''<query>       ::= <select_stmt>
-<select_stmt> ::= SELECT <columns> FROM <table> [<where_clause>] [<limit_clause>]
-<columns>     ::= STAR | <column_list>
-<column_list> ::= IDENTIFIER (COMMA IDENTIFIER)*
-<table>       ::= IDENTIFIER
-<where_clause> ::= WHERE <expression>
-<limit_clause> ::= LIMIT NUMBER
-<expression>  ::= <or_expr>
-<or_expr>     ::= <and_expr> (OR <and_expr>)*
-<and_expr>    ::= <comparison> (AND <comparison>)*
-<comparison>  ::= <leaf> [<comp_op> <leaf>]
-<comp_op>     ::= EQUAL | NOT_EQUAL | GREATER_THAN | LESS_THAN | ...
-<leaf>        ::= IDENTIFIER | NUMBER | STRING_LITERAL''')
+    # Pengertian BNF
+    p = doc.add_paragraph()
+    p.add_run('Pengertian BNF: ').bold = True
+    p.add_run('Backus-Naur Form (BNF) adalah notasi standar untuk menuliskan CFG. Simbol ::= berarti "didefinisikan sebagai", | berarti "atau", dan [...] berarti "opsional".')
     
-    add_heading(doc, '4.2 Operator Precedence', 2)
+    add_heading(doc, '4.1 Grammar CSV_QL dalam BNF', 2)
+    add_code_block(doc, '''<query>        ::= <select_stmt>
+
+<select_stmt>  ::= SELECT <columns> FROM <table> [<where_clause>] [<limit_clause>]
+
+<columns>      ::= STAR                        -- Simbol * untuk semua kolom
+                 | <column_list>               -- Atau daftar kolom spesifik
+
+<column_list>  ::= IDENTIFIER (COMMA IDENTIFIER)*   -- Satu atau lebih nama kolom
+
+<table>        ::= IDENTIFIER                  -- Nama file CSV
+
+<where_clause> ::= WHERE <expression>          -- Klausa filter (opsional)
+
+<limit_clause> ::= LIMIT NUMBER                -- Batasan hasil (opsional)
+
+<expression>   ::= <or_expr>                   -- Ekspresi logika
+
+<or_expr>      ::= <and_expr> (OR <and_expr>)* -- Operasi OR
+
+<and_expr>     ::= <comparison> (AND <comparison>)*  -- Operasi AND
+
+<comparison>   ::= <leaf> [<comp_op> <leaf>]   -- Perbandingan nilai
+
+<comp_op>      ::= EQUAL | NOT_EQUAL | GREATER_THAN | LESS_THAN 
+                 | GREATER_THAN_OR_EQ | LESS_THAN_OR_EQ
+
+<leaf>         ::= IDENTIFIER | NUMBER | STRING_LITERAL  -- Nilai dasar''')
+    
+    add_heading(doc, '4.2 Operator Precedence (Prioritas Operator)', 2)
+    doc.add_paragraph('Urutan prioritas operator dari yang terendah ke tertinggi:')
     add_table(doc,
-        ['Level', 'Operator', 'Associativity'],
+        ['Level', 'Operator', 'Associativity', 'Keterangan'],
         [
-            ['1 (lowest)', 'OR', 'Left'],
-            ['2', 'AND', 'Left'],
-            ['3 (highest)', '=, !=, >, <, >=, <=', 'Left'],
+            ['1 (terendah)', 'OR', 'Left-to-right', 'Diproses terakhir'],
+            ['2', 'AND', 'Left-to-right', 'Diproses setelah perbandingan'],
+            ['3 (tertinggi)', '=, !=, >, <, >=, <=', 'Left-to-right', 'Diproses pertama'],
         ]
     )
     
-    add_heading(doc, '4.3 Metode Parsing: Recursive Descent', 2)
+    add_heading(doc, '4.3 Komponen CFG', 2)
+    doc.add_paragraph('• Terminal (Token): SELECT, FROM, WHERE, LIMIT, AND, OR, STAR, COMMA, EQUAL, NOT_EQUAL, GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQ, LESS_THAN_OR_EQ, IDENTIFIER, NUMBER, STRING_LITERAL')
+    doc.add_paragraph('• Non-terminal: query, select_stmt, columns, column_list, table, where_clause, limit_clause, expression, or_expr, and_expr, comparison, comp_op, leaf')
+    doc.add_paragraph('• Start Symbol: <query>')
+    
+    doc.add_page_break()
+    
+    # ==================== HALAMAN 7: PARSER DAN AST ====================
+    add_heading(doc, '5. Desain Parser dan Sketsa AST', 1)
+    
+    # Pengertian Parser
+    p = doc.add_paragraph()
+    p.add_run('Pengertian Parser: ').bold = True
+    p.add_run('Parser adalah komponen compiler yang menganalisis struktur sintaksis dari urutan token. Parser memeriksa apakah urutan token sesuai dengan grammar dan membangun representasi struktur program (biasanya berupa tree).')
     
     # Pengertian Recursive Descent
-    add_heading(doc, 'Pengertian Recursive Descent Parsing', 3)
-    doc.add_paragraph(
-        'Recursive Descent Parsing adalah teknik parsing top-down di mana setiap non-terminal dalam grammar '
-        'diimplementasikan sebagai fungsi rekursif. Parser membaca token dari kiri ke kanan dan membangun '
-        'parse tree dari atas ke bawah. Teknik ini mudah diimplementasikan dan dipahami.'
-    )
+    p = doc.add_paragraph()
+    p.add_run('Pengertian Recursive Descent: ').bold = True
+    p.add_run('Recursive Descent adalah teknik parsing top-down dimana setiap non-terminal dalam grammar diimplementasikan sebagai satu fungsi. Fungsi-fungsi ini saling memanggil secara rekursif sesuai dengan aturan grammar.')
     
-    doc.add_paragraph('Setiap non-terminal dalam grammar memiliki fungsi parser yang sesuai:')
-    doc.add_paragraph('• parse() → Entry point')
-    doc.add_paragraph('• parse_select() → Parse SELECT statement')
-    doc.add_paragraph('• parse_columns() → Parse daftar kolom')
-    doc.add_paragraph('• parse_expression() → Parse WHERE clause')
-    doc.add_paragraph('• parse_logic_or() → Parse operasi OR')
-    doc.add_paragraph('• parse_logic_and() → Parse operasi AND')
-    doc.add_paragraph('• parse_comparison() → Parse perbandingan')
-    
-    add_heading(doc, '4.4 Abstract Syntax Tree (AST)', 2)
+    add_heading(doc, '5.1 Desain Parser: Recursive Descent (LL(1))', 2)
+    doc.add_paragraph('Setiap non-terminal dalam grammar diimplementasikan sebagai fungsi:')
+    doc.add_paragraph('• parse() → Fungsi utama, memanggil parse_select()')
+    doc.add_paragraph('• parse_select() → Mem-parse "SELECT columns FROM table..."')
+    doc.add_paragraph('• parse_columns() → Mem-parse daftar kolom atau simbol *')
+    doc.add_paragraph('• parse_expression() → Mem-parse ekspresi dalam WHERE')
+    doc.add_paragraph('• parse_logic_or() → Mem-parse operasi logika OR')
+    doc.add_paragraph('• parse_logic_and() → Mem-parse operasi logika AND')
+    doc.add_paragraph('• parse_comparison() → Mem-parse perbandingan (a = b, x > 5, dll)')
     
     # Pengertian AST
-    add_heading(doc, 'Pengertian AST', 3)
-    doc.add_paragraph(
-        'Abstract Syntax Tree (AST) adalah representasi pohon dari struktur sintaksis program. '
-        'Berbeda dengan parse tree, AST hanya menyimpan informasi yang relevan dan menghilangkan '
-        'detail sintaksis seperti kurung dan koma. AST digunakan untuk analisis semantik dan code generation.'
-    )
+    p = doc.add_paragraph()
+    p.add_run('Pengertian AST: ').bold = True
+    p.add_run('Abstract Syntax Tree (AST) adalah representasi pohon dari struktur program. Berbeda dengan parse tree yang lengkap, AST hanya menyimpan informasi yang relevan untuk pemrosesan lebih lanjut (semantic analysis, code generation).')
     
-    doc.add_paragraph('Struktur AST CSV_QL:')
+    add_heading(doc, '5.2 Sketsa Struktur AST', 2)
+    add_code_block(doc, '''SelectStatement                    -- Node utama untuk SELECT query
+├── columns: List[str]             -- Daftar kolom: ["nama", "nilai"] atau ["*"]
+├── table: str                     -- Nama file CSV: "data_nilai.csv"
+├── where_clause: Optional[Expr]   -- Kondisi filter (bisa None jika tidak ada)
+│   └── BinaryOp                   -- Operasi biner (perbandingan/logika)
+│       ├── left: Expr             -- Operand kiri
+│       ├── op: Operator           -- Operator (=, AND, OR, >, <, dll)
+│       └── right: Expr            -- Operand kanan
+└── limit: Optional[int]           -- Batas hasil (bisa None jika tidak ada)
+
+Tipe Expr (Expression):
+• BinaryOp      -- Operasi dengan 2 operand (a = b, x AND y)
+• Identifier    -- Nama kolom (contoh: "nama", "nilai_angka")
+• Number        -- Nilai angka (contoh: 3.0, 5)
+• StringLiteral -- Nilai string (contoh: "Lulus", "A")''')
+    
+    add_heading(doc, '5.3 Contoh AST untuk Query', 2)
+    doc.add_paragraph('Query: SELECT nama FROM data.csv WHERE nilai >= 3.0 AND status = "Lulus"')
     add_code_block(doc, '''SelectStatement
-├── columns: List[str]       # ["nama", "nilai"] atau ["*"]
-├── table: str               # "data_nilai.csv"
-├── where_clause: Optional[Expr]
-│   └── BinaryOp
-│       ├── left: Expr
-│       ├── op: Op
-│       └── right: Expr
-└── limit: Optional[int]     # 10''')
+├── columns: ["nama"]
+├── table: "data.csv"
+├── where_clause:
+│   └── BinaryOp (operator: AND)
+│       ├── left: BinaryOp (operator: >=)
+│       │   ├── left: Identifier("nilai")
+│       │   └── right: Number(3.0)
+│       └── right: BinaryOp (operator: =)
+│           ├── left: Identifier("status")
+│           └── right: StringLiteral("Lulus")
+└── limit: None''')
     
     doc.add_page_break()
     
-    # ==================== BAB V ANALISIS SEMANTIK ====================
-    add_heading(doc, 'BAB V - ANALISIS SEMANTIK', 1)
-    
-    # Pengertian Semantic Analysis
-    add_heading(doc, 'Pengertian Semantic Analysis', 3)
-    doc.add_paragraph(
-        'Semantic Analysis (Analisis Semantik) adalah tahap yang memeriksa kebenaran makna program '
-        'setelah parsing. Analisis semantik memastikan bahwa program tidak hanya benar secara sintaksis '
-        'tetapi juga bermakna. Contoh: memastikan variabel sudah dideklarasikan sebelum digunakan, '
-        'tipe data cocok, dll.'
-    )
-    
-    add_heading(doc, '5.1 Fungsi Analisis Semantik', 2)
-    doc.add_paragraph('Semantic analyzer CSV_QL melakukan validasi:')
-    doc.add_paragraph('1. Validasi File CSV - Memeriksa apakah file yang direferensikan ada')
-    doc.add_paragraph('2. Validasi Kolom SELECT - Memeriksa apakah kolom yang diminta ada dalam file')
-    doc.add_paragraph('3. Validasi Kolom WHERE - Memeriksa apakah kolom dalam kondisi WHERE ada')
-    doc.add_paragraph('4. Validasi LIMIT - Memeriksa apakah nilai LIMIT positif')
-    
-    add_heading(doc, '5.2 Tabel Simbol', 2)
-    
-    # Pengertian Symbol Table
-    add_heading(doc, 'Pengertian Symbol Table', 3)
-    doc.add_paragraph(
-        'Symbol Table (Tabel Simbol) adalah struktur data yang menyimpan informasi tentang identifier '
-        'dalam program. Informasi ini meliputi nama, tipe, scope, dan atribut lainnya. '
-        'Tabel simbol digunakan selama kompilasi untuk pengecekan semantik.'
-    )
-    
-    doc.add_paragraph('Semantic analyzer membangun tabel simbol dari header CSV:')
-    add_table(doc,
-        ['Symbol', 'Type', 'Source'],
-        [
-            ['nim', 'String', 'CSV Header'],
-            ['nama', 'String', 'CSV Header'],
-            ['mata_kuliah', 'String', 'CSV Header'],
-            ['sks', 'Number', 'CSV Header'],
-            ['nilai_huruf', 'String', 'CSV Header'],
-            ['nilai_angka', 'Number', 'CSV Header'],
-            ['semester', 'Number', 'CSV Header'],
-            ['status', 'String', 'CSV Header'],
-        ]
-    )
-    
-    add_heading(doc, '5.3 Contoh Error Handling', 2)
-    doc.add_paragraph('Query dengan Error:')
-    add_code_block(doc, 'SELECT ipk FROM data_nilai.csv')
-    doc.add_paragraph('Output:')
-    add_code_block(doc, '❌ Semantic Error: Kolom \'ipk\' tidak ada di data_nilai.csv')
-    
-    doc.add_page_break()
-    
-    # ==================== BAB VI IR ====================
-    add_heading(doc, 'BAB VI - INTERMEDIATE REPRESENTATION (IR)', 1)
+    # ==================== HALAMAN 8: IR DAN ALUR EKSEKUSI ====================
+    add_heading(doc, '6. Desain IR dan Alur Eksekusi', 1)
     
     # Pengertian IR
-    add_heading(doc, 'Pengertian Intermediate Representation', 3)
-    doc.add_paragraph(
-        'Intermediate Representation (IR) adalah representasi antara kode sumber dan kode mesin. '
-        'IR memudahkan optimasi dan memisahkan front-end (parsing) dari back-end (code generation). '
-        'Dalam konteks query engine, IR berupa Query Plan yang menggambarkan langkah-langkah eksekusi.'
-    )
+    p = doc.add_paragraph()
+    p.add_run('Pengertian Intermediate Representation (IR): ').bold = True
+    p.add_run('IR adalah representasi antara kode sumber dan kode akhir. IR memudahkan optimasi dan memisahkan front-end (parsing) dari back-end (eksekusi). Dalam query engine, IR berupa Query Plan yang menggambarkan langkah-langkah eksekusi.')
     
-    add_heading(doc, '6.1 Desain Query Plan', 2)
+    # Pengertian Query Plan
+    p = doc.add_paragraph()
+    p.add_run('Pengertian Query Plan: ').bold = True
+    p.add_run('Query Plan adalah rencana eksekusi yang menjelaskan urutan operasi untuk menjalankan query. Setiap langkah dalam plan melakukan satu operasi spesifik terhadap data.')
+    
+    add_heading(doc, '6.1 Desain Query Plan (IR)', 2)
+    doc.add_paragraph('Query Plan CSV_QL terdiri dari 4 jenis langkah yang dieksekusi secara berurutan:')
+    
     add_table(doc,
-        ['Step', 'Nama', 'Deskripsi'],
+        ['Step', 'Operasi', 'Deskripsi', 'Contoh'],
         [
-            ['1', 'SCAN', 'Baca file CSV'],
-            ['2', 'FILTER', 'Filter baris dengan kondisi WHERE'],
-            ['3', 'PROJECT', 'Pilih kolom yang diminta'],
-            ['4', 'LIMIT', 'Batasi jumlah hasil'],
+            ['1', 'SCAN', 'Membaca seluruh baris dari file CSV', 'SCAN("data.csv")'],
+            ['2', 'FILTER', 'Menyaring baris yang memenuhi kondisi WHERE', 'FILTER(status = "Lulus")'],
+            ['3', 'PROJECT', 'Memilih kolom yang diminta dalam SELECT', 'PROJECT(["nama", "nilai"])'],
+            ['4', 'LIMIT', 'Membatasi jumlah hasil output', 'LIMIT(5)'],
         ]
     )
     
-    add_heading(doc, '6.2 Struktur Data IR', 2)
+    add_heading(doc, '6.2 Struktur Data Query Plan', 2)
     add_code_block(doc, '''@dataclass
 class ScanStep:
-    table: str                 # Nama file CSV
+    table: str              # Nama file CSV yang dibaca
 
 @dataclass
 class FilterStep:
-    condition: str             # String representasi kondisi
+    condition: str          # Kondisi filter dari WHERE clause
 
 @dataclass
 class ProjectStep:
-    columns: List[str]         # Daftar kolom
+    columns: List[str]      # Daftar kolom yang dipilih
 
 @dataclass
 class LimitStep:
-    count: int                 # Jumlah batas
+    count: int              # Jumlah maksimal hasil
 
 @dataclass
 class QueryPlan:
-    steps: List[PlanStep]      # Urutan langkah eksekusi''')
+    steps: List[PlanStep]   # Urutan langkah eksekusi''')
     
-    add_heading(doc, '6.3 Contoh Query Plan', 2)
-    doc.add_paragraph('Query:')
-    add_code_block(doc, 'SELECT nama, nilai_huruf FROM data_nilai.csv WHERE status = "Lulus" LIMIT 5')
+    add_heading(doc, '6.3 Alur Eksekusi (Compilation Pipeline)', 2)
+    doc.add_paragraph('Berikut adalah alur lengkap dari query string hingga hasil eksekusi:')
+    add_code_block(doc, '''Query String (input pengguna)
+        ↓
+┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+│    LEXER    │ → │   PARSER    │ → │  SEMANTIC   │ → │     IR      │ → │   ENGINE    │
+│ (Tokenisasi)│   │(Bangun AST) │   │ (Validasi)  │   │(Query Plan) │   │ (Eksekusi)  │
+└─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘
+        ↓                ↓                ↓                ↓                 ↓
+    Tokens             AST           Validated         QueryPlan        Result Set
+  (daftar token)   (pohon sintaks)  (AST valid)    (rencana eksekusi)  (hasil query)''')
     
-    doc.add_paragraph('Query Plan yang dihasilkan:')
-    add_code_block(doc, '''Step 1: SCAN
-   └─ Table: data_nilai.csv
-Step 2: FILTER
-   └─ Condition: status = "Lulus"
-Step 3: PROJECT
-   └─ Columns: [nama, nilai_huruf]
-Step 4: LIMIT
-   └─ Count: 5''')
-    
-    doc.add_page_break()
-    
-    # ==================== BAB VII EXECUTION ENGINE ====================
-    add_heading(doc, 'BAB VII - EXECUTION ENGINE', 1)
-    
-    # Pengertian Execution Engine
-    add_heading(doc, 'Pengertian Execution Engine', 3)
-    doc.add_paragraph(
-        'Execution Engine adalah komponen yang menjalankan query plan terhadap data aktual. '
-        'Engine membaca data dari sumber (file CSV), menerapkan filter, memproyeksikan kolom, '
-        'dan mengembalikan hasil. Ini adalah tahap terakhir dari pipeline kompilasi.'
-    )
-    
-    add_heading(doc, '7.1 Arsitektur Pipeline Kompilasi', 2)
-    add_code_block(doc, '''Query String
-     ↓
-┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
-│  LEXER  │ → │ PARSER  │ → │SEMANTIC │ → │   IR    │
-└─────────┘   └─────────┘   └─────────┘   └─────────┘
-     ↓             ↓             ↓             ↓
-  Tokens         AST         Validated      QueryPlan
-                                               ↓
-                                         ┌─────────┐
-                                         │ ENGINE  │
-                                         └─────────┘
-                                               ↓
-                                          Result Set''')
-    
-    add_heading(doc, '7.2 Algoritma Eksekusi', 2)
-    doc.add_paragraph('Engine mengeksekusi query dengan langkah:')
-    doc.add_paragraph('1. Buka dan baca file CSV')
-    doc.add_paragraph('2. Untuk setiap baris, evaluasi WHERE clause')
-    doc.add_paragraph('3. Jika lolos filter, ambil kolom yang diminta')
-    doc.add_paragraph('4. Tambahkan ke hasil, cek LIMIT')
-    doc.add_paragraph('5. Kembalikan (headers, rows)')
+    add_heading(doc, '6.4 Contoh Query Plan', 2)
+    doc.add_paragraph('Query: SELECT nama, nilai FROM data.csv WHERE status = "Lulus" LIMIT 5')
+    add_code_block(doc, '''Query Plan yang dihasilkan:
+  Step 1: SCAN(table="data.csv")           -- Baca 22 baris dari CSV
+  Step 2: FILTER(condition='status="Lulus"') -- 18 baris lolos filter
+  Step 3: PROJECT(columns=["nama","nilai"])  -- Pilih 2 kolom
+  Step 4: LIMIT(count=5)                     -- Ambil 5 baris pertama
+  
+  Output: 5 baris × 2 kolom''')
     
     doc.add_page_break()
     
-    # ==================== BAB VIII SIMULASI DFA ====================
-    add_heading(doc, 'BAB VIII - SIMULASI AUTOMATA (DFA)', 1)
+    # ==================== HALAMAN 9: SIMULASI DFA DAN CONTOH ====================
+    add_heading(doc, '7. Simulasi Automata (DFA) dan Contoh Input-Output', 1)
     
-    add_heading(doc, '8.1 Definisi Formal DFA Lexer', 2)
-    doc.add_paragraph('DFA M = (Q, Σ, δ, q0, F) dengan:')
-    doc.add_paragraph('• Q = {q0, q1, q2, q3, q4, qf} — Himpunan state')
-    doc.add_paragraph('• Σ = ASCII characters')
-    doc.add_paragraph('• δ = Fungsi transisi (lihat tabel sebelumnya)')
-    doc.add_paragraph('• q0 = State awal (START)')
-    doc.add_paragraph('• F = {qf} — State akhir (ACCEPT)')
-    
-    add_heading(doc, '8.2 Contoh Simulasi DFA', 2)
+    add_heading(doc, '7.1 Simulasi DFA Lexer', 2)
+    doc.add_paragraph('Berikut adalah simulasi langkah demi langkah DFA saat memproses query:')
     doc.add_paragraph('Input: SELECT nama FROM data.csv')
-    doc.add_paragraph()
-    doc.add_paragraph('Trace Transisi:')
     
     add_table(doc,
-        ['Step', 'State', 'Input', 'Next State', 'Token'],
+        ['Step', 'State', 'Karakter', 'State Baru', 'Token yang Dihasilkan'],
         [
-            ['1', 'q0', 'S', 'q1', '-'],
-            ['2', 'q1', 'E', 'q1', '-'],
-            ['3', 'q1', 'L', 'q1', '-'],
-            ['4', 'q1', 'E', 'q1', '-'],
-            ['5', 'q1', 'C', 'q1', '-'],
-            ['6', 'q1', 'T', 'q1', '-'],
-            ['7', 'q1', ' ', 'qf', 'SELECT'],
-            ['8', 'q0', 'n', 'q1', '-'],
-            ['9', 'q1', 'a', 'q1', '-'],
-            ['10', 'q1', 'm', 'q1', '-'],
-            ['11', 'q1', 'a', 'q1', '-'],
-            ['12', 'q1', ' ', 'qf', 'IDENTIFIER(nama)'],
+            ['1-6', 'q0→q1', 'S,E,L,E,C,T', 'q1', '(belum emit)'],
+            ['7', 'q1', 'spasi', 'qf→q0', 'KEYWORD("SELECT")'],
+            ['8-11', 'q0→q1', 'n,a,m,a', 'q1', '(belum emit)'],
+            ['12', 'q1', 'spasi', 'qf→q0', 'IDENTIFIER("nama")'],
+            ['13-16', 'q0→q1', 'F,R,O,M', 'q1', '(belum emit)'],
+            ['17', 'q1', 'spasi', 'qf→q0', 'KEYWORD("FROM")'],
+            ['18-25', 'q0→q1', 'd,a,t,a,.,c,s,v', 'q1', '(belum emit)'],
+            ['26', 'q1', 'EOF', 'qf', 'IDENTIFIER("data.csv")'],
         ]
     )
     
-    doc.add_page_break()
+    add_heading(doc, '7.2 Contoh Input-Output Program', 2)
     
-    # ==================== BAB IX PENGUJIAN ====================
-    add_heading(doc, 'BAB IX - PENGUJIAN DAN HASIL', 1)
+    doc.add_paragraph('Test Case 1: SELECT semua data')
+    add_code_block(doc, '''Input:  SELECT * FROM data_nilai.csv
+Output: ✅ 22 baris × 8 kolom ditemukan''')
     
-    test_cases = [
-        ('Test Case 1: SELECT Semua Data',
-         'SELECT * FROM data_nilai.csv',
-         '22 baris ditemukan'),
-        ('Test Case 2: SELECT Kolom Tertentu',
-         'SELECT nim, nama, nilai_huruf FROM data_nilai.csv',
-         '22 baris, 3 kolom'),
-        ('Test Case 3: Filter WHERE nilai A',
-         'SELECT nama, mata_kuliah FROM data_nilai.csv WHERE nilai_huruf = "A"',
-         '7 baris ditemukan'),
-        ('Test Case 4: Mahasiswa Tidak Lulus',
-         'SELECT nim, nama FROM data_nilai.csv WHERE status = "Tidak Lulus"',
-         '3 baris ditemukan'),
-        ('Test Case 5: Kombinasi AND',
-         'SELECT * FROM data_nilai.csv WHERE semester = 5 AND nilai_huruf = "A"',
-         '3 baris ditemukan'),
-        ('Test Case 6: LIMIT',
-         'SELECT * FROM data_nilai.csv LIMIT 5',
-         '5 baris ditemukan'),
-    ]
+    doc.add_paragraph('Test Case 2: Filter dengan WHERE')
+    add_code_block(doc, '''Input:  SELECT nama, mata_kuliah FROM data_nilai.csv WHERE nilai_huruf = "A"
+Output: ✅ 7 baris ditemukan
+        | nama          | mata_kuliah                    |
+        | Ahmad Rizki   | Automata dan Teknik Kompilasi  |
+        | Ahmad Rizki   | Struktur Data                  |
+        | Citra Dewi    | Automata dan Teknik Kompilasi  |
+        | ...           | ...                            |''')
     
-    for title, query, result in test_cases:
-        add_heading(doc, title, 2)
-        doc.add_paragraph('Query:')
-        add_code_block(doc, query)
-        doc.add_paragraph(f'Hasil: {result}')
-        doc.add_paragraph()
+    doc.add_paragraph('Test Case 3: Kombinasi kondisi AND')
+    add_code_block(doc, '''Input:  SELECT * FROM data_nilai.csv WHERE semester = 5 AND nilai_huruf = "A"
+Output: ✅ 3 baris ditemukan''')
     
-    add_heading(doc, 'Test Case Error Handling', 2)
-    doc.add_paragraph('Query dengan kolom tidak ada:')
-    add_code_block(doc, 'SELECT ipk FROM data_nilai.csv')
-    doc.add_paragraph('Output:')
-    add_code_block(doc, '❌ Semantic Error: Kolom \'ipk\' tidak ada di data_nilai.csv')
+    doc.add_paragraph('Test Case 4: Menggunakan LIMIT')
+    add_code_block(doc, '''Input:  SELECT nama FROM data_nilai.csv LIMIT 3
+Output: ✅ 3 baris ditemukan (dibatasi dari 22 total)''')
+    
+    doc.add_paragraph('Test Case 5: Error Handling - Kolom tidak ada')
+    add_code_block(doc, '''Input:  SELECT ipk FROM data_nilai.csv
+Output: ❌ Semantic Error: Kolom 'ipk' tidak ditemukan di data_nilai.csv
+        Kolom yang tersedia: nim, nama, mata_kuliah, sks, nilai_huruf, 
+                             nilai_angka, semester, status''')
     
     doc.add_page_break()
     
-    # ==================== BAB X KESIMPULAN ====================
-    add_heading(doc, 'BAB X - KESIMPULAN', 1)
-    
-    add_heading(doc, '10.1 Kesimpulan', 2)
-    doc.add_paragraph(
-        'Proyek CSV_QL berhasil mengimplementasikan mini query engine untuk data nilai mahasiswa '
-        'dengan menerapkan konsep automata dan teknik kompilasi:'
-    )
-    doc.add_paragraph('1. Lexical Analyzer - Diimplementasikan menggunakan DFA untuk tokenisasi query SQL')
-    doc.add_paragraph('2. Parser - Diimplementasikan menggunakan metode Recursive Descent dengan CFG')
-    doc.add_paragraph('3. Semantic Analyzer - Melakukan validasi file CSV dan kolom')
-    doc.add_paragraph('4. Intermediate Representation - Query plan (SCAN, FILTER, PROJECT, LIMIT)')
-    doc.add_paragraph('5. Execution Engine - Mengeksekusi query terhadap file CSV')
-    
-    add_heading(doc, '10.2 Saran Pengembangan', 2)
-    doc.add_paragraph('1. Mendukung klausa ORDER BY, GROUP BY, dan HAVING')
-    doc.add_paragraph('2. Mendukung fungsi agregat (COUNT, SUM, AVG)')
-    doc.add_paragraph('3. Mendukung JOIN antar file CSV')
-    doc.add_paragraph('4. Optimasi query plan')
-    
-    doc.add_page_break()
-    
-    # ==================== DAFTAR PUSTAKA ====================
+    # ==================== HALAMAN 10: DAFTAR PUSTAKA ====================
     add_heading(doc, 'DAFTAR PUSTAKA', 1)
     
     references = [
-        'Aho, A. V., Lam, M. S., Sethi, R., & Ullman, J. D. (2006). Compilers: Principles, Techniques, and Tools (2nd ed.). Addison-Wesley.',
-        'Hopcroft, J. E., Motwani, R., & Ullman, J. D. (2006). Introduction to Automata Theory, Languages, and Computation (3rd ed.). Pearson.',
-        'Grune, D., & Jacobs, C. J. (2007). Parsing Techniques: A Practical Guide (2nd ed.). Springer.',
-        'Python Software Foundation. (2024). Python CSV Module Documentation. https://docs.python.org/3/library/csv.html',
-        'Garcia-Molina, H., Ullman, J. D., & Widom, J. (2008). Database Systems: The Complete Book (2nd ed.). Pearson.',
+        'Aho, A. V., Lam, M. S., Sethi, R., & Ullman, J. D. (2006). Compilers: Principles, Techniques, and Tools (2nd ed.). Addison-Wesley. — Buku referensi utama tentang teknik kompilasi.',
+        'Hopcroft, J. E., Motwani, R., & Ullman, J. D. (2006). Introduction to Automata Theory, Languages, and Computation (3rd ed.). Pearson. — Referensi teori automata dan bahasa formal.',
+        'Grune, D., & Jacobs, C. J. (2007). Parsing Techniques: A Practical Guide (2nd ed.). Springer. — Panduan praktis teknik parsing.',
+        'Python Software Foundation. (2024). Python CSV Module Documentation. https://docs.python.org/3/library/csv.html — Dokumentasi modul CSV Python.',
+        'Garcia-Molina, H., Ullman, J. D., & Widom, J. (2008). Database Systems: The Complete Book (2nd ed.). Pearson. — Referensi sistem database dan query processing.',
     ]
     
     for i, ref in enumerate(references, 1):
         doc.add_paragraph(f'[{i}] {ref}')
     
-    doc.add_page_break()
-    
-    # ==================== LAMPIRAN ====================
+    doc.add_paragraph()
     add_heading(doc, 'LAMPIRAN', 1)
     
     add_heading(doc, 'A. Struktur Direktori Proyek', 2)
     add_code_block(doc, '''csv_ql/
-├── README.md              Dokumentasi proyek
-├── TEST_CASES.md          Test cases
-├── MAKALAH_CSV_QL.docx    Makalah ini
-├── data_nilai.csv         Data sampel
-│
-└── src/                   Source code
-    ├── main.py            Entry point & REPL
-    ├── tokens.py          Definisi token
-    ├── lexer.py           Lexical analyzer (DFA)
-    ├── ast_nodes.py       Abstract Syntax Tree
-    ├── parser.py          Syntax analyzer (CFG)
-    ├── semantic.py        Semantic analyzer
-    ├── ir.py              Intermediate representation
-    ├── engine.py          Query execution
-    └── dfa.py             DFA visualization''')
+├── src/                     # Source code
+│   ├── main.py              # Entry point & REPL interaktif
+│   ├── tokens.py            # Definisi tipe token
+│   ├── lexer.py             # Lexical analyzer (implementasi DFA)
+│   ├── ast_nodes.py         # Struktur node AST
+│   ├── parser.py            # Syntax analyzer (recursive descent)
+│   ├── semantic.py          # Semantic analyzer (validasi)
+│   ├── ir.py                # Query plan generator
+│   ├── engine.py            # Query execution engine
+│   └── dfa.py               # Visualisasi DFA
+├── data_nilai.csv           # Data sampel untuk testing
+└── README.md                # Dokumentasi proyek''')
     
     add_heading(doc, 'B. Cara Menjalankan Program', 2)
-    add_code_block(doc, '''cd csv_ql/src
+    add_code_block(doc, '''# Masuk ke direktori source
+cd csv_ql/src
 
-# Mode REPL (Interactive)
+# Mode REPL (Interactive) - ketik query satu per satu
 python main.py
 
-# Mode Direct Query
+# Mode Direct Query - langsung eksekusi satu query
 python main.py "SELECT * FROM ../data_nilai.csv"
 
-# Mode Verbose (dengan detail kompilasi)
+# Mode Verbose - tampilkan detail proses kompilasi
 python main.py "SELECT * FROM ../data_nilai.csv" -v''')
-    
-    add_heading(doc, 'C. Screenshot Aplikasi', 2)
-    doc.add_paragraph('[Tambahkan screenshot hasil running program di sini]')
     
     return doc
 
 if __name__ == '__main__':
     doc = create_document()
-    doc.save('MAKALAH_CSV_QL.docx')
-    print('✅ MAKALAH_CSV_QL.docx berhasil dibuat!')
+    doc.save('MAKALAH_CSV_QL_v2.docx')
+    print('✅ MAKALAH_CSV_QL_v2.docx berhasil dibuat! (Max 10 halaman dengan penjelasan)')
